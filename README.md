@@ -8,8 +8,6 @@ This Script will document:
  - Terms and Conditions
  - Applications (Only Assigned)
  
- ![Created by baseVISION](https://www.basevision.ch/wp-content/uploads/2015/12/baseVISION-Logo_RGB.png)
- 
 # Usage
 Assuming you've installed the module somewhere in your module path, just import the module in your profile, e.g.:
 ```
@@ -33,3 +31,5 @@ For any issues or feedback related to this module, please register for GitHub, a
 @guidooliveira for the PSWord Module, which enables the creation of the Word file. https://github.com/guidooliveira/PSWord
 
 @mirkocolemberg for the help and testing of the script.
+
+![Created by baseVISION](https://www.basevision.ch/wp-content/uploads/2015/12/baseVISION-Logo_RGB.png)
