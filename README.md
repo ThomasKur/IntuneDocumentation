@@ -8,6 +8,8 @@ This Script will document:
  - Terms and Conditions
  - Applications (Only Assigned)
  
+ ![Created by baseVISION](https://www.basevision.ch/wp-content/uploads/2015/12/baseVISION-Logo_RGB.png)
+ 
 # Usage
 Assuming you've installed the module somewhere in your module path, just import the module in your profile, e.g.:
 ```
