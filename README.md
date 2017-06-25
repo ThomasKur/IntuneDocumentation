@@ -9,7 +9,8 @@ This Script will document:
  - Applications (Only Assigned)
  
 # Usage
-Assuming you've installed the module somewhere in your module path, just import the module in your profile, e.g.:
+Download the DocumentIntune.ps1 file and execute it with PowerShell.exe:
+
 ```
 powershell.exe -executionpolicy bypass -file DocumentIntune.ps1
 ```
