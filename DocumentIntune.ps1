@@ -1,4 +1,4 @@
-﻿<#
+<#
 .DESCRIPTION
 This Script documents an Intune Tenand with almostb all settings, which are available over the Graph API.
 
@@ -902,9 +902,10 @@ if($global:authToken){
 
 #endregion
 #region Document T&C
-
+    write-Log "Terms and Conditions"
     Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading1 -Text "Terms and Conditions"
-    Get-TermsAndConditions | Add-WordTable -FilePath "$ScriptPath\$DocumentName" -AutoFitStyle Contents -Design LightListAccent2
+    $GAndT = Get-TermsAndConditions 
+    $GAndT | Add-WordTable -FilePath "$ScriptPath\$DocumentName" -AutoFitStyle Contents -Design LightListAccent2
 
 #endregion
 #region Document EnrollmentRestrictions
