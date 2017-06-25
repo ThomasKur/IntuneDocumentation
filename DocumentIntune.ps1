@@ -903,10 +903,11 @@ if($global:authToken){
 #endregion
 #region Document T&C
     write-Log "Terms and Conditions"
-    Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading1 -Text "Terms and Conditions"
     $GAndT = Get-TermsAndConditions 
-    $GAndT | Add-WordTable -FilePath "$ScriptPath\$DocumentName" -AutoFitStyle Contents -Design LightListAccent2
-
+    if($GAndT){
+        Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading1 -Text "Terms and Conditions"
+        $GAndT | Add-WordTable -FilePath "$ScriptPath\$DocumentName" -AutoFitStyle Contents -Design LightListAccent2
+    }
 #endregion
 #region Document EnrollmentRestrictions
     $Org = Get-Organization
