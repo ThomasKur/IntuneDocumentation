@@ -9,7 +9,7 @@ The Script is using the PSWord and AzureAD Module. Therefore you have to install
 
 .NOTES
 Author: Thomas Kurth/baseVISION
-Date:   24.6.2017
+Date:   30.6.2017
 
 History
     001: First Version
@@ -19,6 +19,7 @@ History
     005: Version is now taken from Variable, Log can be written to Windows Event, 
          ScriptName does no longer contain Script FileName, which is now available in $CurrentFileName 
     006: ScriptPath not allways read correctly. Sometimes it was a relative path.
+    007: Better formating and Option to specify the Save As location
 
 ExitCodes:
     99001: Could not Write to LogFile
@@ -45,6 +46,8 @@ $DefaultLogWindowsEventLog = "CustomPS"
 
 $MaxStringLengthSettings = 50
 $DocumentName = "DocumentIntune.docx"
+$DateTimeRegex = "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z" 
+
  
 #region Functions
 ########################################################
@@ -742,6 +745,45 @@ param
 
 }
 
+Function Format-MsGraphData(){
+    <#
+.SYNOPSIS
+This function CLeansup Values Returned By Microsoft Graph
+.DESCRIPTION
+This function CLeansup Values Returned By Microsoft Graph
+.EXAMPLE
+Format-MsGraphData -Value "@Odata.Type"
+Returns "Type"
+.NOTES
+NAME: Format-MsGraphData
+#>
+[cmdletbinding()]
+param
+(
+    [Parameter(Mandatory=$false)]
+    [AllowEmptyString()]
+    [AllowNull()]
+    [String]$Value
+)
+    $Value = $Value -replace "#microsoft.graph.",""
+    $Value = $Value -replace "windows","win"
+    $Value = $Value -replace "StoreforBusiness","SfB"
+    $Value = $Value -replace "@odata.",""
+    if($Value -ne $null -and $Value -match "@{*"){
+        $Value = $Value -replace "@{",""
+        $Value = $Value -replace "}",""
+        $Value = $Value -replace ";",""
+    }
+    if($Value -match $DateTimeRegex){
+        try{
+            [DateTime]$Date = ([DateTime]::Parse($Value))
+            $Value = "$($Date.ToShortDateString()) $($Date.ToShortTimeString())"
+        } catch {
+        
+        }
+    }
+    return $value
+}
 
 #endregion
 
@@ -842,8 +884,33 @@ if($global:authToken){
 }
 #endregion
 #endregion
+
 #region Main Script
 ########################################################
+
+#region Save Path
+try{
+    $SaveFileDialog = New-Object windows.forms.savefiledialog   
+    $SaveFileDialog.initialDirectory = $ScriptPath  
+    $SaveFileDialog.title = "Save File to Disk (If File exists, content will be appended)"   
+    $SaveFileDialog.filter = "Word Document (*.docx)|*.docx" 
+    $SaveFileDialog.ShowHelp = $True   
+    Write-Log "Where would you like to create documentation file?... (see File Save Dialog)"
+    $result = $SaveFileDialog.ShowDialog()    
+    if($result -eq "OK")    {    
+        Write-Log "Selected File and Location: $($SaveFileDialog.filename )" 
+        $FullDocumentationPath = $SaveFileDialog.filename
+    } 
+    else { 
+        Write-Log "File Save Dialog Cancelled! Using Default Path: $ScriptPath\$DocumentName" -Type Warn
+        $FullDocumentationPath = "$ScriptPath\$DocumentName"
+    } 
+    $SaveFileDialog.Dispose()
+} catch {
+    Write-Log "File Save Dialog Cancelled! Using Default Path: $ScriptPath\$DocumentName" -Type Warn
+}
+#endregion
+
 
 #region Document Apps
 
@@ -854,7 +921,7 @@ if($global:authToken){
             $Intune_App = New-Object -TypeName PSObject
             $Intune_App | Add-Member Noteproperty "Publisher" $_.publisher
             $Intune_App | Add-Member Noteproperty "DisplayName" $_.displayName
-            $Intune_App | Add-Member Noteproperty "Type" ($_.'@odata.type' -replace "#microsoft.graph.","" -replace "windows","win" -replace "StoreforBusiness","SfB")
+            $Intune_App | Add-Member Noteproperty "Type" (Format-MsGraphData $_.'@odata.type')
             $Assignments = @()
             foreach($Assignment in $App_Assignment) {
                 $Assignments += "$((Get-AADGroup -id $Assignment.targetGroupId).displayName)`n - Intent:$($Assignment.installIntent)"
@@ -863,38 +930,38 @@ if($global:authToken){
             $Intune_Apps += $Intune_App
         }
     } 
-    Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading1 -Text "Applications"
-    $Intune_Apps | Sort-Object Publisher,DisplayName | Add-WordTable -FilePath "$ScriptPath\$DocumentName" -AutoFitStyle Contents -Design LightListAccent2
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Applications"
+    $Intune_Apps | Sort-Object Publisher,DisplayName | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
 
 #endregion
 #region Document Compliance Policies
 
-    Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading1 -Text "Compliance Policies"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Compliance Policies"
     $DCPs = Get-DeviceCompliancePolicy
     foreach($DCP in $DCPs){
 
         write-Log "Device Compliance Policy: $($DCP.displayName)"
-        Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading2 -Text $DCP.displayName
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $DCP.displayName
         
         $ht2 = @{}
-        $DCP.psobject.properties | Foreach { $ht2[$_.Name] = "$($_.Value) " -replace "#microsoft.graph.","" }
-        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath "$ScriptPath\$DocumentName" -AutoFitStyle Contents -Design LightListAccent2 
+        $DCP.psobject.properties | Foreach { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
+        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
 
         $id = $DCP.id
         $DCPA = Get-DeviceCompliancePolicyAssignment -id $id
 
         if($DCPA){
             write-Log "Getting Compliance Policy assignment..."
-            Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading3 -Text "Assignments"
+            Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
             
             if($DCPA.count -gt 1){
                 $Assignments = @()
                 foreach($group in $DCPA){
                     $Assignments += (Get-AADGroup -id $group.targetGroupId).displayName
                 }
-                $Assignments | Add-WordText -FilePath "$ScriptPath\$DocumentName" -Size 12
+                $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12
             } else {
-                (Get-AADGroup -id $DCPA.targetGroupId).displayName | Add-WordText -FilePath "$ScriptPath\$DocumentName" -Size 12
+                (Get-AADGroup -id $DCPA.targetGroupId).displayName | Add-WordText -FilePath $FullDocumentationPath -Size 12
             }
             
         }
@@ -905,56 +972,56 @@ if($global:authToken){
     write-Log "Terms and Conditions"
     $GAndT = Get-TermsAndConditions 
     if($GAndT){
-        Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading1 -Text "Terms and Conditions"
-        $GAndT | Add-WordTable -FilePath "$ScriptPath\$DocumentName" -AutoFitStyle Contents -Design LightListAccent2
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Terms and Conditions"
+        $GAndT | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
     }
 #endregion
 #region Document EnrollmentRestrictions
     $Org = Get-Organization
     $id = $Org.id
     
-    Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading1 -Text "Device Enrollment Restrictions"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Enrollment Restrictions"
     $Restrictions = Get-DeviceEnrollmentRestrictions -id $id 
     $ht2 = @{}
-    $Restrictions.psobject.properties | Foreach { if($_.Name -ne "@odata.context"){$ht2[$_.Name] = "$($_.Value) "} }
-    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath "$ScriptPath\$DocumentName" -AutoFitStyle Contents -Design LightListAccent2
+    $Restrictions.psobject.properties | Foreach { if($_.Name -ne "@odata.context"){$ht2[(Format-MsGraphData $($_.Name))] = ((Format-MsGraphData "$($_.Value) "))} }
+    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
 
 #endregion
 #region Document Device Configurations
 
-    Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading1 -Text "Device Configuration"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Configuration"
     $DCPs = Get-DeviceConfigurationPolicy
 
     foreach($DCP in $DCPs){
 
         write-Log "Device Compliance Policy: $($DCP.displayName)"
-        Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading2 -Text $DCP.displayName
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $DCP.displayName
         
         $ht2 = @{}
         $DCP.psobject.properties | Foreach { 
-            $ht2[$_.Name] = if(("$($_.Value)" -replace "#microsoft.graph.","").Length -gt $MaxStringLengthSettings){
-                    "$(($_.Value -replace "#microsoft.graph." ,'').substring(0, $MaxStringLengthSettings))..."
+            $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
+                    "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
                 } else {
-                    "$($_.Value -replace "#microsoft.graph." ,'') "
+                    "$((Format-MsGraphData "$($_.Value)")) "
                 }
         }
-        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath "$ScriptPath\$DocumentName" -AutoFitStyle Contents -Design LightListAccent2
+        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
 
         $id = $DCP.id
         $DCPA = Get-DeviceConfigurationPolicyAssignment -id $id
 
         if($DCPA){
             write-Log "Getting Compliance Policy assignment..."
-            Add-WordText -FilePath "$ScriptPath\$DocumentName" -Heading Heading3 -Text "Assignments"
+            Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
             
             if($DCPA.count -gt 1){
                 $Assignments = @()
                 foreach($group in $DCPA){
                     $Assignments += (Get-AADGroup -id $group.targetGroupId).displayName
                 }
-                $Assignments | Add-WordText -FilePath "$ScriptPath\$DocumentName" -Size 12
+                $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12
             } else {
-                $Assignments += (Get-AADGroup -id $DCPA.targetGroupId).displayName | Add-WordText -FilePath "$ScriptPath\$DocumentName"  -Size 12
+                $Assignments += (Get-AADGroup -id $DCPA.targetGroupId).displayName | Add-WordText -FilePath $FullDocumentationPath  -Size 12
             }
             
         }
