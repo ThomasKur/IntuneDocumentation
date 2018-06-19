@@ -20,6 +20,7 @@ History
          ScriptName does no longer contain Script FileName, which is now available in $CurrentFileName 
     006: ScriptPath not allways read correctly. Sometimes it was a relative path.
     007: Better formating and Option to specify the Save As location
+    008: Update to support the current Graph API
 
 ExitCodes:
     99001: Could not Write to LogFile
@@ -235,13 +236,13 @@ $tenant = $userUpn.Host
 [System.Reflection.Assembly]::LoadFrom($adalforms) | Out-Null
 
 $clientId = "d1ddf0e4-d672-4dae-b554-9d5bdfd93547"
-Â 
+ 
 $redirectUri = "urn:ietf:wg:oauth:2.0:oob"
-Â 
+ 
 $resourceAppIdURI = "https://graph.microsoft.com"
-Â 
+ 
 $authority = "https://login.windows.net/$Tenant"
-Â 
+ 
     try {
 
     $authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority
@@ -312,10 +313,10 @@ param
     try {
         if($Name){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") -and (!($_.'@odata.type').Contains("managed")) -and (!($_.'@odata.type').Contains("#microsoft.graph.iosVppApp")) }
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") -and (!($_.'@odata.type').Contains("managed")) -and (!($_.'@odata.type').Contains("#microsoft.graph.iosVppApp")) }
         } else {
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value | Where-Object { (!($_.'@odata.type').Contains("managed")) -and (!($_.'@odata.type').Contains("#microsoft.graph.iosVppApp")) }
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value | Where-Object { (!($_.'@odata.type').Contains("managed")) -and (!($_.'@odata.type').Contains("#microsoft.graph.iosVppApp")) }
         }
     } catch {
         $ex = $_.Exception
@@ -352,28 +353,44 @@ param
     $ApplicationId
 )
 
-    $graphApiVersion = "Beta"
-    $Resource = "deviceAppManagement/mobileApps/$ApplicationId/groupAssignments"
-    try {
-        if(!$ApplicationId){
-            write-Log "No Application Id specified, specify a valid Application Id" -Type Error
-            break
-        } else {
-            $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
-        }
-    } catch {
+$graphApiVersion = "Beta"
+$Resource = "deviceAppManagement/mobileApps/$ApplicationId/assignments"
 
-        $ex = $_.Exception
-        $errorResponse = $ex.Response.GetResponseStream()
-        $reader = New-Object System.IO.StreamReader($errorResponse)
-        $reader.BaseStream.Position = 0
-        $reader.DiscardBufferedData()
-        $responseBody = $reader.ReadToEnd();
-        Write-Log "Response content:`n$responseBody" -Type Error
-        Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
+    try {
+
+        if(!$ApplicationId){
+
+        write-host "No Application Id specified, specify a valid Application Id" -f Red
+        break
+
+        }
+
+        else {
+
+        $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
+        (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
+
+        }
+
     }
+
+    catch {
+
+    $ex = $_.Exception
+    $errorResponse = $ex.Response.GetResponseStream()
+    $reader = New-Object System.IO.StreamReader($errorResponse)
+    $reader.BaseStream.Position = 0
+    $reader.DiscardBufferedData()
+    $responseBody = $reader.ReadToEnd();
+    Write-Host "Response content:`n$responseBody" -f Red
+    Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
+    write-host
+    break
+
+    }
+
 }
+
 
 Function Get-AADGroup(){
 <#
@@ -404,24 +421,24 @@ param
     try {
         if($id){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Group_resource)?`$filter=id eq '$id'"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
         } elseif($GroupName -eq "" -or $GroupName -eq $null){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Group_resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
         } else {
             if(!$Members){
                 $uri = "https://graph.microsoft.com/$graphApiVersion/$($Group_resource)?`$filter=displayname eq '$GroupName'"
-                (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
+                (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
             } elseif($Members){
 
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Group_resource)?`$filter=displayname eq '$GroupName'"
-            $Group = (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
+            $Group = (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
 
                 if($Group){
                     $GID = $Group.id
                     $Group.displayName
                     $uri = "https://graph.microsoft.com/$graphApiVersion/$($Group_resource)/$GID/Members"
-                    (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
+                    (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
                 }
             }
         }
@@ -484,19 +501,19 @@ param
             write-Log "Multiple parameters set, specify a single parameter -Android -iOS or -Win10 against the function" -Type Error
         } elseif($Android){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value | Where-Object { ($_.'@odata.type').contains("android") }
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value | Where-Object { ($_.'@odata.type').contains("android") }
         } elseif($iOS){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value | Where-Object { ($_.'@odata.type').contains("ios") }
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value | Where-Object { ($_.'@odata.type').contains("ios") }
         } elseif($Win10){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value | Where-Object { ($_.'@odata.type').contains("windows10CompliancePolicy") }
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value | Where-Object { ($_.'@odata.type').contains("windows10CompliancePolicy") }
         } elseif($Name){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
         } else { 
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
         }
 
     } catch {
@@ -529,29 +546,40 @@ NAME: Get-DeviceCompliancePolicyAssignment
 #>
 
 [cmdletbinding()]
+
 param
 (
     [Parameter(Mandatory=$true,HelpMessage="Enter id (guid) for the Device Compliance Policy you want to check assignment")]
     $id
 )
 
-    $graphApiVersion = "Beta"
-    $DCP_resource = "deviceManagement/deviceCompliancePolicies"
+$graphApiVersion = "Beta"
+$DCP_resource = "deviceManagement/deviceCompliancePolicies"
 
     try {
-        $uri = "https://graph.microsoft.com/$graphApiVersion/$($DCP_resource)/$id/groupAssignments"
-        (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
-    } catch {
-        $ex = $_.Exception
-        $errorResponse = $ex.Response.GetResponseStream()
-        $reader = New-Object System.IO.StreamReader($errorResponse)
-        $reader.BaseStream.Position = 0
-        $reader.DiscardBufferedData()
-        $responseBody = $reader.ReadToEnd();
-        Write-Log "Response content:`n$responseBody" -Type Error
-        Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
+
+    $uri = "https://graph.microsoft.com/$graphApiVersion/$($DCP_resource)/$id/assignments"
+    (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
+
     }
+
+    catch {
+
+    $ex = $_.Exception
+    $errorResponse = $ex.Response.GetResponseStream()
+    $reader = New-Object System.IO.StreamReader($errorResponse)
+    $reader.BaseStream.Position = 0
+    $reader.DiscardBufferedData()
+    $responseBody = $reader.ReadToEnd();
+    Write-Host "Response content:`n$responseBody" -f Red
+    Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
+    write-host
+    break
+
+    }
+
 }
+
 
 Function Get-TermsAndConditions(){
 
@@ -579,10 +607,10 @@ param
 
         if($Name){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
         } else {
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
         }
     } catch {
         $ex = $_.Exception
@@ -597,44 +625,49 @@ param
 
 }
 
-Function Get-DeviceEnrollmentRestrictions(){
+Function Get-DeviceEnrollmentConfigurations(){
+    
 <#
 .SYNOPSIS
-This function is used to get device enrollment restrictions resource from the Graph API REST interface
+This function is used to get Deivce Enrollment Configurations from the Graph API REST interface
 .DESCRIPTION
-The function connects to the Graph API Interface and gets the device enrollment restrictions Resource
+The function connects to the Graph API Interface and gets Device Enrollment Configurations
 .EXAMPLE
-Get-DeviceEnrollmentRestrictions -id $id
-Returns device enrollment restrictions configured in Intune
+Get-DeviceEnrollmentConfigurations
+Returns Device Enrollment Configurations configured in Intune
 .NOTES
-NAME: Get-DeviceEnrollmentRestrictions
+NAME: Get-DeviceEnrollmentConfigurations
 #>
-[cmdletbinding()]
-param
-(
-    $id
-)
+    
+    [cmdletbinding()]
+    
     $graphApiVersion = "Beta"
-    $Resource = "organization/$id/defaultDeviceEnrollmentRestrictions"
-    try {
-        if(!$id){
-            write-Log "Organization Id hasn't been specified, please specify Id..." -Type Error
-            break
-        } else {
-            $uri = "https://graph.microsoft.com/$graphApiVersion/$($resource)"
-            Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get
+    $Resource = "deviceManagement/deviceEnrollmentConfigurations"
+        
+        try {
+            
+        $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
+        (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
+    
         }
-    } catch {
+        
+        catch {
+    
         $ex = $_.Exception
         $errorResponse = $ex.Response.GetResponseStream()
         $reader = New-Object System.IO.StreamReader($errorResponse)
         $reader.BaseStream.Position = 0
         $reader.DiscardBufferedData()
         $responseBody = $reader.ReadToEnd();
-        Write-Log "Response content:`n$responseBody" -Type Error
-        Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
+        Write-Host "Response content:`n$responseBody" -f Red
+        Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
+        write-host
+        break
+    
+        }
+    
     }
-}
+
 
 Function Get-Organization(){
 <#
@@ -653,7 +686,7 @@ NAME: Get-Organization
     $resource = "organization"
     try {
         $uri = "https://graph.microsoft.com/$graphApiVersion/$($resource)"
-        (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
+        (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
     } catch {
         $ex = $_.Exception
         $errorResponse = $ex.Response.GetResponseStream()
@@ -691,10 +724,10 @@ param
     try {
         if($Name){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($DCP_resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
         } else {
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($DCP_resource)"
-            (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
         }
     } catch {
         $ex = $_.Exception
@@ -709,6 +742,7 @@ param
 }
 
 Function Get-DeviceConfigurationPolicyAssignment(){
+
 <#
 .SYNOPSIS
 This function is used to get device configuration policy assignment from the Graph API REST interface
@@ -720,30 +754,42 @@ Returns any device configuration policy assignment configured in Intune
 .NOTES
 NAME: Get-DeviceConfigurationPolicyAssignment
 #>
+
 [cmdletbinding()]
+
 param
 (
     [Parameter(Mandatory=$true,HelpMessage="Enter id (guid) for the Device Configuration Policy you want to check assignment")]
     $id
 )
 
-    $graphApiVersion = "Beta"
-    $DCP_resource = "deviceManagement/deviceConfigurations"
+$graphApiVersion = "Beta"
+$DCP_resource = "deviceManagement/deviceConfigurations"
+
     try {
-        $uri = "https://graph.microsoft.com/$graphApiVersion/$($DCP_resource)/$id/groupAssignments"
-        (Invoke-RestMethod -Uri $uri â€“Headers $authToken â€“Method Get).Value
-    } catch {
-        $ex = $_.Exception
-        $errorResponse = $ex.Response.GetResponseStream()
-        $reader = New-Object System.IO.StreamReader($errorResponse)
-        $reader.BaseStream.Position = 0
-        $reader.DiscardBufferedData()
-        $responseBody = $reader.ReadToEnd();
-        Write-Log "Response content:`n$responseBody" -Type Error
-        Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"  -Type Error
+
+    $uri = "https://graph.microsoft.com/$graphApiVersion/$($DCP_resource)/$id/groupAssignments"
+    (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).Value
+
+    }
+
+    catch {
+
+    $ex = $_.Exception
+    $errorResponse = $ex.Response.GetResponseStream()
+    $reader = New-Object System.IO.StreamReader($errorResponse)
+    $reader.BaseStream.Position = 0
+    $reader.DiscardBufferedData()
+    $responseBody = $reader.ReadToEnd();
+    Write-Host "Response content:`n$responseBody" -f Red
+    Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
+    write-host
+    break
+
     }
 
 }
+
 
 Function Format-MsGraphData(){
     <#
@@ -890,24 +936,24 @@ if($global:authToken){
 
 #region Save Path
 try{
-    $SaveFileDialogÂ =Â New-ObjectÂ windows.forms.savefiledialogÂ Â Â 
-    $SaveFileDialog.initialDirectoryÂ =Â $ScriptPathÂ Â 
-    $SaveFileDialog.titleÂ =Â "SaveÂ FileÂ toÂ Disk (If File exists, content will be appended)"Â Â Â 
-    $SaveFileDialog.filterÂ =Â "Word Document (*.docx)|*.docx"Â 
-    $SaveFileDialog.ShowHelpÂ =Â $TrueÂ Â Â 
-    Write-LogÂ "WhereÂ wouldÂ youÂ likeÂ toÂ createÂ documentationÂ file?...Â (seeÂ FileÂ SaveÂ Dialog)"
-    $resultÂ =Â $SaveFileDialog.ShowDialog()Â Â Â Â 
-    if($resultÂ -eqÂ "OK")Â Â Â Â {Â Â Â Â 
-        Write-LogÂ "SelectedÂ FileÂ andÂ Location: $($SaveFileDialog.filenameÂ )"Â 
+    $SaveFileDialog = New-Object windows.forms.savefiledialog   
+    $SaveFileDialog.initialDirectory = $ScriptPath  
+    $SaveFileDialog.title = "Save File to Disk (If File exists, content will be appended)"   
+    $SaveFileDialog.filter = "Word Document (*.docx)|*.docx" 
+    $SaveFileDialog.ShowHelp = $True   
+    Write-Log "Where would you like to create documentation file?... (see File Save Dialog)"
+    $result = $SaveFileDialog.ShowDialog()    
+    if($result -eq "OK")    {    
+        Write-Log "Selected File and Location: $($SaveFileDialog.filename )" 
         $FullDocumentationPath = $SaveFileDialog.filename
-    }Â 
-    elseÂ {Â 
-        Write-LogÂ "FileÂ SaveÂ DialogÂ Cancelled! Using Default Path: $ScriptPath\$DocumentName" -Type Warn
+    } 
+    else { 
+        Write-Log "File Save Dialog Cancelled! Using Default Path: $ScriptPath\$DocumentName" -Type Warn
         $FullDocumentationPath = "$ScriptPath\$DocumentName"
-    }Â 
+    } 
     $SaveFileDialog.Dispose()
 } catch {
-    Write-LogÂ "FileÂ SaveÂ DialogÂ Cancelled! Using Default Path: $ScriptPath\$DocumentName" -Type Warn
+    Write-Log "File Save Dialog Cancelled! Using Default Path: $ScriptPath\$DocumentName" -Type Warn
 }
 #endregion
 
@@ -924,7 +970,7 @@ try{
             $Intune_App | Add-Member Noteproperty "Type" (Format-MsGraphData $_.'@odata.type')
             $Assignments = @()
             foreach($Assignment in $App_Assignment) {
-                $Assignments += "$((Get-AADGroup -id $Assignment.targetGroupId).displayName)`n - Intent:$($Assignment.installIntent)"
+                $Assignments += "$((Get-AADGroup -id $Assignment.target.groupId).displayName)`n - Intent:$($Assignment.intent)"
             }
             $Intune_App | Add-Member Noteproperty "Assignments" ($Assignments -join "`n")
             $Intune_Apps += $Intune_App
@@ -957,11 +1003,11 @@ try{
             if($DCPA.count -gt 1){
                 $Assignments = @()
                 foreach($group in $DCPA){
-                    $Assignments += (Get-AADGroup -id $group.targetGroupId).displayName
+                    $Assignments += (Get-AADGroup -id $group.target.groupId).displayName
                 }
                 $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12
             } else {
-                (Get-AADGroup -id $DCPA.targetGroupId).displayName | Add-WordText -FilePath $FullDocumentationPath -Size 12
+                (Get-AADGroup -id $DCPA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath -Size 12
             }
             
         }
@@ -973,15 +1019,14 @@ try{
     $GAndT = Get-TermsAndConditions 
     if($GAndT){
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Terms and Conditions"
-        $GAndT | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
+        $GAndT | ForEach-Object { $_ | Select-Object -Property id,createdDateTime,modifiedDateTime,displayName,title,version }| Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
     }
 #endregion
 #region Document EnrollmentRestrictions
-    $Org = Get-Organization
-    $id = $Org.id
+
     
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Enrollment Restrictions"
-    $Restrictions = Get-DeviceEnrollmentRestrictions -id $id 
+    $Restrictions = Get-DeviceEnrollmentConfigurations
     $ht2 = @{}
     $Restrictions.psobject.properties | Foreach { if($_.Name -ne "@odata.context"){$ht2[(Format-MsGraphData $($_.Name))] = ((Format-MsGraphData "$($_.Value) "))} }
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
