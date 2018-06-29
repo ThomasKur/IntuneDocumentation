@@ -9,6 +9,7 @@ The Script is using the PSWord and AzureAD Module. Therefore you have to install
 
 .NOTES
 Author: Thomas Kurth/baseVISION
+Co-Author: jflieben
 Date:   30.6.2017
 
 History
