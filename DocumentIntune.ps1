@@ -237,13 +237,13 @@ $tenant = $userUpn.Host
 [System.Reflection.Assembly]::LoadFrom($adalforms) | Out-Null
 
 $clientId = "d1ddf0e4-d672-4dae-b554-9d5bdfd93547"
- 
+ 
 $redirectUri = "urn:ietf:wg:oauth:2.0:oob"
- 
+ 
 $resourceAppIdURI = "https://graph.microsoft.com"
- 
+ 
 $authority = "https://login.windows.net/$Tenant"
- 
+ 
     try {
 
     $authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority
@@ -937,24 +937,23 @@ if($global:authToken){
 
 #region Save Path
 try{
-    $SaveFileDialog = New-Object windows.forms.savefiledialog   
-    $SaveFileDialog.initialDirectory = $ScriptPath  
-    $SaveFileDialog.title = "Save File to Disk (If File exists, content will be appended)"   
-    $SaveFileDialog.filter = "Word Document (*.docx)|*.docx" 
-    $SaveFileDialog.ShowHelp = $True   
-    Write-Log "Where would you like to create documentation file?... (see File Save Dialog)"
-    $result = $SaveFileDialog.ShowDialog()    
-    if($result -eq "OK")    {    
-        Write-Log "Selected File and Location: $($SaveFileDialog.filename )" 
+    $SaveFileDialog = New-Object windows.forms.savefiledialog
+    $SaveFileDialog.initialDirectory = $ScriptPath
+    $SaveFileDialog.title = "Save File to Disk (If File exists, content will be appended)"
+    $SaveFileDialog.filter = "Word Document (*.docx)|*.docx"
+    $SaveFileDialog.ShowHelp = $True
+    Write-Log "Where would you like to create documentation file?...(see File Save Dialog)"
+    $result = $SaveFileDialog.ShowDialog()
+    if($result -eq "OK") { 
+        Write-Log "Selected File and Location: $($SaveFileDialog.filename)"
         $FullDocumentationPath = $SaveFileDialog.filename
-    } 
-    else { 
-        Write-Log "File Save Dialog Cancelled! Using Default Path: $ScriptPath\$DocumentName" -Type Warn
+    } else {
+        Write-Log "File Save Dialog Cancelled! Using Default Path: $ScriptPath\$DocumentName" -Type Warn
         $FullDocumentationPath = "$ScriptPath\$DocumentName"
-    } 
+    }
     $SaveFileDialog.Dispose()
 } catch {
-    Write-Log "File Save Dialog Cancelled! Using Default Path: $ScriptPath\$DocumentName" -Type Warn
+    Write-Log "File Save Dialog Cancelled! Using Default Path: $ScriptPath\$DocumentName" -Type Warn
 }
 #endregion
 
