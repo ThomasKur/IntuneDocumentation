@@ -20,6 +20,7 @@ History
          ScriptName does no longer contain Script FileName, which is now available in $CurrentFileName 
     006: ScriptPath not allways read correctly. Sometimes it was a relative path.
     007: Better formating and Option to specify the Save As location
+    008: Jos Lieben: Fixed a few things and added Conditional Access Policies
 
 ExitCodes:
     99001: Could not Write to LogFile
@@ -28,12 +29,11 @@ ExitCodes:
 
 #>
 [CmdletBinding()]
-Param(
-)
+Param()
 ## Manual Variable Definition
 ########################################################
 $DebugPreference = "Continue"
-$ScriptVersion = "001"
+$ScriptVersion = "008"
 $ScriptName = "DocumentIntune"
 
 $LogFilePathFolder     = Join-Path -Path $Env:TEMP -ChildPath $ScriptName
@@ -43,10 +43,9 @@ $DefaultLogOutputMode  = "Console" # "Console-LogFile","Console-WindowsEvent","L
 $DefaultLogWindowsEventSource = $ScriptName
 $DefaultLogWindowsEventLog = "CustomPS"
 
-$MaxStringLengthSettings = 50
+$MaxStringLengthSettings = 350
 $DocumentName = "DocumentIntune.docx"
 $DateTimeRegex = "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z" 
-
  
 #region Functions
 ########################################################
@@ -281,10 +280,10 @@ Function Get-IntuneApplication(){
     try {
         if($Name){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") -and (!($_.'@odata.type').Contains("managed")) -and (!($_.'@odata.type').Contains("#microsoft.graph.iosVppApp")) }
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") -and (!($_.'@odata.type').Contains("managed")) -and (!($_.'@odata.type').Contains("#microsoft.graph.iosVppApp")) }
         } else {
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value | Where-Object { (!($_.'@odata.type').Contains("managed")) -and (!($_.'@odata.type').Contains("#microsoft.graph.iosVppApp")) }
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value | Where-Object { (!($_.'@odata.type').Contains("managed")) -and (!($_.'@odata.type').Contains("#microsoft.graph.iosVppApp")) }
         }
     } catch {
         $ex = $_.Exception
@@ -333,7 +332,7 @@ Function Get-ApplicationAssignment(){
             break
         } else {
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Assignments
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Assignments
         }
     } catch {
 
@@ -381,24 +380,24 @@ Function Get-AADGroup(){
     try {
         if($id){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Group_resource)?`$filter=id eq '$id'"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
         } elseif($GroupName -eq "" -or $GroupName -eq $null){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Group_resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
         } else {
             if(!$Members){
                 $uri = "https://graph.microsoft.com/$graphApiVersion/$($Group_resource)?`$filter=displayname eq '$GroupName'"
-                (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+                (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
             } elseif($Members){
 
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Group_resource)?`$filter=displayname eq '$GroupName'"
-            $Group = (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+            $Group = (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
 
                 if($Group){
                     $GID = $Group.id
                     $Group.displayName
                     $uri = "https://graph.microsoft.com/$graphApiVersion/$($Group_resource)/$GID/Members"
-                    (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+                    (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
                 }
             }
         }
@@ -465,19 +464,19 @@ Function Get-DeviceCompliancePolicy(){
             write-Log "Multiple parameters set, specify a single parameter -Android -iOS or -Win10 against the function" -Type Error
         } elseif($Android){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value | Where-Object { ($_.'@odata.type').contains("android") }
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value | Where-Object { ($_.'@odata.type').contains("android") }
         } elseif($iOS){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value | Where-Object { ($_.'@odata.type').contains("ios") }
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value | Where-Object { ($_.'@odata.type').contains("ios") }
         } elseif($Win10){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value | Where-Object { ($_.'@odata.type').contains("windows10CompliancePolicy") }
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value | Where-Object { ($_.'@odata.type').contains("windows10CompliancePolicy") }
         } elseif($Name){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
         } else { 
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
         }
 
     } catch {
@@ -493,6 +492,19 @@ Function Get-DeviceCompliancePolicy(){
 
     }
 
+}
+
+Function Get-AADUserDetails(){
+    Param(
+        $userGuid
+    )
+    $header = @{
+    'Authorization' = 'Bearer ' + $rmToken
+    'X-Requested-With'= 'XMLHttpRequest'
+    'x-ms-client-request-id'= [guid]::NewGuid()
+    'x-ms-correlation-id' = [guid]::NewGuid()}
+    $url = "https://main.iam.ad.ext.azure.com/api/UserDetails/$userGuid"
+    Write-Output (Invoke-RestMethod -Uri $url -Headers $header -Method GET -ErrorAction Stop)
 }
 
 Function Get-DeviceCompliancePolicyAssignment(){
@@ -525,7 +537,7 @@ Function Get-DeviceCompliancePolicyAssignment(){
         'x-ms-correlation-id' = [guid]::NewGuid()}
     try {
         $uri = "https://graph.microsoft.com/$graphApiVersion/$($DCP_resource)/$id/assignments"
-        (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+        (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
     } catch {
         $ex = $_.Exception
         $errorResponse = $ex.Response.GetResponseStream()
@@ -569,10 +581,10 @@ Function Get-TermsAndConditions(){
 
         if($Name){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
         } else {
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
         }
     } catch {
         $ex = $_.Exception
@@ -613,7 +625,7 @@ Function Get-DeviceEnrollmentRestrictions(){
         'x-ms-correlation-id' = [guid]::NewGuid()}       
     try {
         $uri = "https://graph.microsoft.com/$graphApiVersion/$($resource)"
-        (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+        (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
     } catch {
         $ex = $_.Exception
         $errorResponse = $ex.Response.GetResponseStream()
@@ -648,7 +660,7 @@ Function Get-Organization(){
         'x-ms-correlation-id' = [guid]::NewGuid()}     
     try {
         $uri = "https://graph.microsoft.com/$graphApiVersion/$($resource)"
-        (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+        (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
     } catch {
         $ex = $_.Exception
         $errorResponse = $ex.Response.GetResponseStream()
@@ -691,10 +703,10 @@ Function Get-DeviceConfigurationPolicy(){
     try {
         if($Name){
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($DCP_resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value | Where-Object { ($_.'displayName').contains("$Name") }
         } else {
             $uri = "https://graph.microsoft.com/$graphApiVersion/$($DCP_resource)"
-            (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+            (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
         }
     } catch {
         $ex = $_.Exception
@@ -735,7 +747,7 @@ Function Get-DeviceConfigurationPolicyAssignment(){
     $DCP_resource = "deviceManagement/deviceConfigurations"
     try {
         $uri = "https://graph.microsoft.com/$graphApiVersion/$($DCP_resource)/$id/assignments"
-        (Invoke-RestMethod -Uri $uri –Headers $graphHeader –Method Get).Value
+        (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
     } catch {
         $ex = $_.Exception
         $errorResponse = $ex.Response.GetResponseStream()
@@ -781,7 +793,48 @@ function get-azureRMToken(){
     $apiToken = Invoke-RestMethod "https://login.windows.net/$tenantId/oauth2/token" -Method POST -Body $body -ContentType 'application/x-www-form-urlencoded'
     return $apiToken.access_token
 }
+function get-conditionalAccessPolicySettings(){
+    <#
+      .SYNOPSIS
+      Retrieve conditional access policy settings from Intune
+      .DESCRIPTION
+      Retrieves all conditional access policies from Intune (if policyId is omitted) and outputs their settings
+      .EXAMPLE
+      $policies = get-conditionalAccessPolicySettings
+      .EXAMPLE
+      $policy = get-conditionalAccessPolicySettings -policyId 533ceb01-3603-48cb-8586-56a60153939d
+      .PARAMETER policyId
+      GUID of the policy you wish to return, if left empty, all policies will be returned
+      .NOTES
+      filename: get-conditionalAccessPolicySettings.ps1
+      author: Jos Lieben
+      blog: www.lieben.nu
+      created: 12/6/2018
+      requires: global azure rm token
+    #>
+    Param(
+        $policyId #if not specified, return all policies
+    )
 
+    $header = @{
+    'Authorization' = 'Bearer ' + $rmToken
+    'X-Requested-With'= 'XMLHttpRequest'
+    'x-ms-client-request-id'= [guid]::NewGuid()
+    'x-ms-correlation-id' = [guid]::NewGuid()}
+    if(!$policyId){
+        $url = "https://main.iam.ad.ext.azure.com/api/Policies/Policies?top=100&nextLink=null&appId=&includeBaseline=true"
+        $policies = @(Invoke-RestMethod -Uri $url -Headers $header -Method GET -ErrorAction Stop).items
+        foreach($policy in $policies){
+            get-conditionalAccessPolicySettings -Username $Username -Password $Password -policyId $policy.policyId
+        }
+    }else{
+        $url = "https://main.iam.ad.ext.azure.com/api/Policies/$policyId"
+        try{
+            $policy = Invoke-RestMethod -Uri $url -Headers $header -Method GET -ErrorAction Stop
+            Write-Output $policy
+        }catch{}
+    }
+}
 Function Format-MsGraphData(){
     <#
     .SYNOPSIS
@@ -877,24 +930,24 @@ $Global:rmToken = get-azureRMToken -Username $user -Password $password
 
 #region Save Path
 try{
-    $SaveFileDialog = New-Object windows.forms.savefiledialog   
-    $SaveFileDialog.initialDirectory = $LogFilePathFolder 
-    $SaveFileDialog.title = "Save File to Disk (If File exists, content will be appended)"   
-    $SaveFileDialog.filter = "Word Document (*.docx)|*.docx" 
-    $SaveFileDialog.ShowHelp = $True   
-    Write-Log "Where would you like to create documentation file?... (see File Save Dialog)"
-    $result = $SaveFileDialog.ShowDialog()    
-    if($result -eq "OK")    {    
-        Write-Log "Selected File and Location: $($SaveFileDialog.filename )" 
+    $SaveFileDialog = New-Object windows.forms.savefiledialog
+    $SaveFileDialog.initialDirectory = $LogFilePathFolder 
+    $SaveFileDialog.title = "Save File to Disk (If File exists, content will be appended)"   
+    $SaveFileDialog.filter = "Word Document (*.docx)|*.docx" 
+    $SaveFileDialog.ShowHelp = $True   
+    Write-Log "Where would you like to create documentation file?... (see File Save Dialog)"
+    $result = $SaveFileDialog.ShowDialog()    
+    if($result -eq "OK")    {    
+        Write-Log "Selected File and Location: $($SaveFileDialog.filename )" 
         $FullDocumentationPath = $SaveFileDialog.filename
-    } 
-    else { 
-        Write-Log "File Save Dialog Cancelled! Using Default Path: $LogFilePathFolder\$DocumentName" -Type Warn
+    } 
+    else { 
+        Write-Log "File Save Dialog Cancelled! Using Default Path: $LogFilePathFolder\$DocumentName" -Type Warn
         $FullDocumentationPath = "$LogFilePathFolder\$DocumentName"
-    } 
+    } 
     $SaveFileDialog.Dispose()
 } catch {
-    Write-Log "File Save Dialog Cancelled! Using Default Path: $LogFilePathFolder\$DocumentName" -Type Warn
+    Write-Log "File Save Dialog Cancelled! Using Default Path: $LogFilePathFolder\$DocumentName" -Type Warn
 }
 #endregion
 
@@ -1015,6 +1068,48 @@ foreach($DCP in $DCPs){
         
     }
 }
+
+#endregion
+
+#region Conditional Access
+
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Conditional Access Configuration"
+$CAPs = get-conditionalAccessPolicySettings
+foreach($CAP in $CAPs){
+    write-Log "Conditional Access Policy: $($CAP.policyName)"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $CAP.policyName
+    
+    $ht2 = @{}
+    $CAP.psobject.properties | Foreach { 
+        $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
+                "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
+            } else {
+                "$((Format-MsGraphData "$($_.Value)")) "
+            }
+    }
+    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments (include)"
+    $Assignments = @()
+    foreach($assignment in $CAP.usersV2.included.groupIds){        
+        $Assignments += (Get-AADGroup -id $assignment).displayName
+    }
+    foreach($assignment in $CAP.usersV2.included.userIds){        
+        $Assignments += (Get-AADUserDetails -userGuid $assignment).displayName
+    }
+    $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12  
+      
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments (exclude)"
+    $Assignments = @()
+    foreach($assignment in $CAP.usersV2.excluded.groupIds){        
+        $Assignments += (Get-AADGroup -id $assignment).displayName
+    }
+    foreach($assignment in $CAP.usersV2.excluded.userIds){        
+        $Assignments += (Get-AADUserDetails -userGuid $assignment).displayName
+    }
+    $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12        
+}
+
 
 #endregion
 
