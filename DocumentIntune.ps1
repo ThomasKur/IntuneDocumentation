@@ -10,7 +10,7 @@ The Script is using the PSWord and AzureAD Module. Therefore you have to install
 .NOTES
 Author: Thomas Kurth/baseVISION
 Co-Author: jflieben
-Date:   30.6.2017
+Date:   4.7.2018
 
 History
     001: First Version
@@ -22,6 +22,7 @@ History
     006: ScriptPath not allways read correctly. Sometimes it was a relative path.
     007: Better formating and Option to specify the Save As location
     008: Jos Lieben: Fixed a few things and added Conditional Access Policies
+    009: Thomas Kurth: Adding AutoPilot Information
 
 
 ExitCodes:
@@ -791,6 +792,41 @@ Function Get-DeviceConfigurationPolicyAssignment(){
 
 }
 
+Function Get-WindowsAutopilotConfig(){
+    <#
+    .SYNOPSIS
+    This function is used to get the AutoPilot configuration from the Graph API REST interface
+    .DESCRIPTION
+    The function connects to the Graph API Interface and gets the AutoPilot Configuration
+    .EXAMPLE
+    Get-WindowsAutopilotConfig
+    Returns the AutoPilot Configuration configured in Intune
+    .NOTES
+    NAME: Get-WindowsAutopilotConfig
+    #>
+    [cmdletbinding()]
+    $graphApiVersion = "Beta"
+    $resource = "deviceManagement/windowsAutopilotDeploymentProfiles"
+    $graphHeader = @{
+        'Authorization' = 'Bearer ' + $authToken
+        'X-Requested-With'= 'XMLHttpRequest'
+        'x-ms-client-request-id'= [guid]::NewGuid()
+        'x-ms-correlation-id' = [guid]::NewGuid()}     
+    try {
+        $uri = "https://graph.microsoft.com/$graphApiVersion/$($resource)"
+
+        (Invoke-RestMethod -Uri $uri -Headers $graphHeader -Method Get).Value
+    } catch {
+        $ex = $_.Exception
+        $errorResponse = $ex.Response.GetResponseStream()
+        $reader = New-Object System.IO.StreamReader($errorResponse)
+        $reader.BaseStream.Position = 0
+        $reader.DiscardBufferedData()
+        $responseBody = $reader.ReadToEnd();
+        Write-Log "Response content:`n$responseBody" -Type Error
+        Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
+    }
+}
 
 function get-azureRMToken(){
     <#
@@ -1147,6 +1183,31 @@ foreach($CAP in $CAPs){
         $Assignments += (Get-AADUserDetails -userGuid $assignment).displayName
     }
     $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12        
+}
+
+
+#endregion
+
+#region AutoPilot Configuration
+
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "AutoPilot Configuration"
+$AutoPilotConfigs = Get-WindowsAutopilotConfig
+
+foreach($APC in $AutoPilotConfigs){
+    write-Log "AutoPilot Config: $($APC.displayName)"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $APC.displayName
+    
+    $ht2 = @{}
+    $APC.psobject.properties | Foreach { 
+        $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
+                "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
+            } else {
+                "$((Format-MsGraphData "$($_.Value)")) "
+            }
+    }
+    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+
+          
 }
 
 
