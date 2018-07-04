@@ -7,6 +7,8 @@ This Script will document:
  - Device Enrollment Restrictions
  - Terms and Conditions
  - Applications (Only Assigned)
+ - Conditional Access
+ - AutoPilot Configuration
  
 # Usage
 Download the DocumentIntune.ps1 file and execute it with PowerShell.exe:
@@ -30,6 +32,8 @@ For any issues or feedback related to this module, please register for GitHub, a
 @Microsoftgraph for the PowerShell Examples: https://github.com/microsoftgraph/powershell-intune-samples
 
 @guidooliveira for the PSWord Module, which enables the creation of the Word file. https://github.com/guidooliveira/PSWord
+
+@joslieben for extending and improving the script
 
 @mirkocolemberg for the help and testing of the script.
 
