@@ -951,7 +951,7 @@ $credentials = Get-Credential -Message "Please enter Office 365 / Azure global a
 $user = $credentials.GetNetworkCredential().UserName
 $password = $credentials.GetNetworkCredential().Password
 
-$Global:authToken = get-graphTokenForIntune -User  $user -Password $password
+$Global:authToken = get-graphTokenForIntune -User $user -Password $password
 $Global:rmToken = get-azureRMToken -Username $user -Password $password
 
 #endregion
