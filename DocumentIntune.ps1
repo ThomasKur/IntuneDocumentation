@@ -22,6 +22,7 @@ History
     006: ScriptPath not allways read correctly. Sometimes it was a relative path.
     007: Better formating and Option to specify the Save As location
     008: Jos Lieben: Fixed a few things and added Conditional Access Policies
+    009: Robin Beismann: Switched from AzureAD to AzureRM Module
 
 
 ExitCodes:
@@ -197,10 +198,9 @@ function get-graphTokenForIntune(){
     )
     $userUpn = New-Object "System.Net.Mail.MailAddress" -ArgumentList $User
     $tenant = $userUpn.Host
-    $AadModule = Get-Module -Name "AzureAD" -ListAvailable
-    if ($AadModule -eq $null) {$AadModule = Get-Module -Name "AzureADPreview" -ListAvailable}
+    $AadModule = Get-Module -Name "AzureRM" -ListAvailable
     if ($AadModule -eq $null) {
-        write-error "AzureAD Powershell module not installed...install this module into your automation account (add from the gallery) and rerun this runbook" -erroraction Continue
+        write-error "AzureRM Powershell module not installed...install this module into your automation account (add from the gallery) and rerun this runbook" -erroraction Continue
         Throw
     }
     if($AadModule.count -gt 1){
@@ -923,16 +923,12 @@ New-Folder $LogFilePathFolder
 Write-Log "Start Script $Scriptname"
 
 #region Loading Modules
-Write-Log "Checking for AzureAD module..."
-$AadModule = Get-Module -Name "AzureAD" -ListAvailable
-if ($AadModule -eq $null) {
-    Write-Log "AzureAD PowerShell module not found, looking for AzureADPreview"
-    $AadModule = Get-Module -Name "AzureADPreview" -ListAvailable
-}
+Write-Log "Checking for AzureRM module..."
+$AadModule = Get-Module -Name "AzureRM" -ListAvailable
 
 if ($AadModule -eq $null) {
-    write-Log "AzureAD Powershell module not installed..." -Type Warn
-    write-Log "Install by running 'Install-Module AzureAD' or 'Install-Module AzureADPreview' from an elevated PowerShell prompt" -Type Warn
+    write-Log "AzureRM Powershell module not installed..." -Type Warn
+    write-Log "Install by running 'Install-Module AzureRM' from an elevated PowerShell prompt" -Type Warn
     write-Log "Script can't continue..." -Type Warn
     exit
 }
