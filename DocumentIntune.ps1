@@ -861,9 +861,8 @@ function get-azureRMToken() {
     $res = Login-AzAccount -Credential $mycreds
     $context = Get-AzContext
 
-    $azureRmProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile;
-    $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azureRmProfile);
-    return $profileClient.AcquireAccessToken($context.Subscription.TenantId).AccessToken;
+    $token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate($context.Account, $context.Environment, $context.Tenant.Id, $null, "Never", $null, "74658136-14ec-4630-ad9b-26e160ff0fc6")
+    return $token
 }
 function get-conditionalAccessPolicySettings() {
     <#
