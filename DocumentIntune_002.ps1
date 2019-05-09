@@ -10,7 +10,7 @@ The Script is using the PSWord and Microsoft.Graph.Intune Module. Therefore you 
 .NOTES
 Author: Thomas Kurth/baseVISION
 Co-Author: jflieben
-Date:   4.7.2018
+Date:   9.5.2019
 
 History
     001: First Version
