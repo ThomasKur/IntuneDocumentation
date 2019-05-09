@@ -13,16 +13,21 @@ This Script will document:
 # Usage
 Download the DocumentIntune.ps1 file and execute it with PowerShell.exe:
 
-```
-powershell.exe -executionpolicy bypass -file DocumentIntune.ps1
-```
-The Documentation will be created in the same folder like the DocumentIntune.ps1 file resides.
+``` powershell
 
-**Important:** Before using the Script the first time, you have to ensure, that you have installed the AzureAD and PSWord Module. To do that, you have to start PowerShell as an Adminstrator and install them:
+powershell.exe -executionpolicy bypass -file DocumentIntune_002.ps1
 
 ```
-Install-Module AzureAD
+
+The Documentation will be created in the same folder like the DocumentIntune_002.ps1 file resides.
+
+**Important:** Before using the Script the first time, you have to ensure, that you have installed the Microsoft.Graph.Intune and PSWord Module. To do that, you have to start PowerShell as an Adminstrator and install them:
+
+```powershell
+
+Install-Module Microsoft.Graph.Intune
 Install-Module PSWord 
+
 ```
 
 # Issues / Feedback
