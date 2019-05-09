@@ -2,7 +2,7 @@
 .DESCRIPTION
 This Script documents an Intune Tenand with almostb all settings, which are available over the Graph API.
 
-The Script is using the PSWord and AzureAD Module. Therefore you have to install them first.
+The Script is using the PSWord and Microsoft.Graph.Intune Module. Therefore you have to install them first.
 
 .EXAMPLE
 
@@ -259,19 +259,7 @@ New-Folder $LogFilePathFolder
 Write-Log "Start Script $Scriptname"
 
 #region Loading Modules
-<#Write-Log "Checking for AzureAD module..."
-$AadModule = Get-Module -Name "AzureAD" -ListAvailable
-if ($AadModule -eq $null) {
-    Write-Log "AzureAD PowerShell module not found, looking for AzureADPreview"
-    $AadModule = Get-Module -Name "AzureADPreview" -ListAvailable
-}
 
-if ($AadModule -eq $null) {
-    write-Log "AzureAD Powershell module not installed..." -Type Warn
-    write-Log "Install by running 'Install-Module AzureAD' or 'Install-Module AzureADPreview' from an elevated PowerShell prompt" -Type Warn
-    write-Log "Script can't continue..." -Type Warn
-    exit
-}#>
 Write-Log "Checking for Intune module..."
 $IntuneModule = Get-Module -Name "Microsoft.Graph.Intune" -ListAvailable
 if ($IntuneModule -eq $null) {
@@ -359,7 +347,7 @@ foreach($DCP in $DCPs){
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $DCP.displayName
     
     $ht2 = @{}
-    $DCP.psobject.properties | Foreach { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
+    $DCP.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
 
     $id = $DCP.id
@@ -416,7 +404,7 @@ foreach($DCP in $DCPs){
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $DCP.displayName
     
     $ht2 = @{}
-    $DCP.psobject.properties | Foreach { 
+    $DCP.psobject.properties | ForEach-Object { 
         $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
                 "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
             } else {
@@ -446,51 +434,8 @@ foreach($DCP in $DCPs){
 }
 
 #endregion
-<#
-#region Conditional Access
 
-Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Conditional Access Configuration"
-$CAPs = Get-IntuneConditionalAccessSetting
-foreach($CAP in $CAPs){
-    write-Log "Conditional Access Policy: $($CAP.id)"
-    Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $CAP.policyName
-    
-    $ht2 = @{}
-    $CAP.psobject.properties | Foreach { 
-        $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
-                "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
-            } else {
-                "$((Format-MsGraphData "$($_.Value)")) "
-            }
-    }
-    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
-
-    Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments (include)"
-    $Assignments = @()
-    foreach($assignment in $CAP.includedGroups.groupIds){        
-        $Assignments += (Get-AADGroup -groupid $assignment).displayName
-    }
-    foreach($assignment in $CAP.usersV2.included.userIds){        
-        $Assignments += (Get-AADUserDetails -userGuid $assignment).displayName
-    }
-    $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12  
-      
-    Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments (exclude)"
-    $Assignments = @()
-    foreach($assignment in $CAP.usersV2.excluded.groupIds){        
-        $Assignments += (Get-AADGroup -id $assignment).displayName
-    }
-    foreach($assignment in $CAP.usersV2.excluded.userIds){        
-        $Assignments += (Get-AADUserDetails -userGuid $assignment).displayName
-    }
-    $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12        
-}
-
-
-#endregion
-#>
 #region AutoPilot Configuration
-
 Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "AutoPilot Configuration"
 $AutoPilotConfigs = Get-WindowsAutopilotConfig
 
@@ -499,7 +444,7 @@ foreach($APC in $AutoPilotConfigs){
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $APC.displayName
     
     $ht2 = @{}
-    $APC.psobject.properties | Foreach { 
+    $APC.psobject.properties | ForEach-Object { 
         $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
                 "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
             } else {
@@ -509,7 +454,6 @@ foreach($APC in $AutoPilotConfigs){
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
   
 }
-
 #endregion
 
 #region Partner Configuration
@@ -522,7 +466,7 @@ foreach($partnerConfig in $partnerConfigs){
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $partnerConfig.displayName
     
     $ht2 = @{}
-    $partnerConfig.psobject.properties | Foreach { 
+    $partnerConfig.psobject.properties | ForEach-Object { 
         $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
                 "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
             } else {
