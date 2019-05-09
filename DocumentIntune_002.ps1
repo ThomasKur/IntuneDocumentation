@@ -24,6 +24,7 @@ History
     008: Jos Lieben: Fixed a few things and added Conditional Access Policies
     009: Thomas Kurth: Adding AutoPilot Information
     010: Complete rewriting and using the Intune PowerShell module
+         Added Partner Information
 
 
 ExitCodes:
