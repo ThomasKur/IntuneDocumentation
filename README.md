@@ -1,15 +1,18 @@
 # Intune Documentation
+
 Automatic Intune Documentation to simplify the life of admins and consultants.
 
 This Script will document:
+
  - Configuration Policies
  - Compliance Policies
  - Device Enrollment Restrictions
  - Terms and Conditions
  - Applications (Only Assigned)
  - AutoPilot Configuration
- 
+
 # Usage
+
 Download the DocumentIntune.ps1 file and execute it with PowerShell.exe:
 
 ``` powershell
@@ -25,14 +28,16 @@ The Documentation will be created in the same folder like the DocumentIntune_002
 ```powershell
 
 Install-Module Microsoft.Graph.Intune
-Install-Module PSWord 
+Install-Module PSWord
 
 ```
 
 # Issues / Feedback
+
 For any issues or feedback related to this module, please register for GitHub, and post your inquiry to this project's issue tracker.
 
 # Thanks to
+
 @Microsoftgraph for the PowerShell Examples: https://github.com/microsoftgraph/powershell-intune-samples
 
 @guidooliveira for the PSWord Module, which enables the creation of the Word file. https://github.com/guidooliveira/PSWord
