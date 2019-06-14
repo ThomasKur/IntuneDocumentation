@@ -9,6 +9,7 @@ This Script will document:
  - Device Enrollment Restrictions
  - Terms and Conditions
  - Applications (Only Assigned)
+ - Application Protection Policies
  - AutoPilot Configuration
 
 # Usage
