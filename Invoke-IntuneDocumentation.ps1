@@ -42,7 +42,7 @@ Param()
 ## Manual Variable Definition
 ########################################################
 $DebugPreference = "Continue"
-$ScriptVersion = "010"
+$ScriptVersion = "011"
 $ScriptName = "DocumentIntune"
 $LogFilePathFolder     = Join-Path -Path $Env:TEMP -ChildPath $ScriptName
 # Log Configuration
