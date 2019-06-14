@@ -297,7 +297,7 @@ foreach($MAM in $MAMs){
     write-Log "App Protection Policy: $($MAM.displayName)"
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $MAM.displayName
     $ht2 = @{}
-    $APP.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
+    $MAM.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
     $id = $APP.id
     $MAMA = Get-IntuneAppProtectionPolicyAndroidAssignment -deviceCompliancePolicyId $id
