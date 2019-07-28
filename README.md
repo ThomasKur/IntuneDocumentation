@@ -24,11 +24,11 @@ Download the DocumentIntune.ps1 file and execute it with PowerShell.exe:
 
 ``` powershell
 
-powershell.exe -executionpolicy bypass -file DocumentIntune.ps1
+powershell.exe -executionpolicy bypass -file Invoke-IntuneDocumentation.ps1
 
 ```
 
-The Documentation will be created in the same folder like the DocumentIntune.ps1 file resides.
+The Documentation will be created in the same folder like the Invoke-IntuneDocumentation.ps1 file resides.
 
 **Important:** Before using the Script the first time, you have to ensure, that you have installed the Microsoft.Graph.Intune and PSWord Module. To do that, you have to start PowerShell as an Adminstrator and install them:
 

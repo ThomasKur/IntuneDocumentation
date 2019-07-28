@@ -199,9 +199,8 @@ Function Get-WindowsAutopilotConfig(){
         Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
     }
 }
-
 Function Get-EnrollmentStatusPage(){
-    <#
+<#
     .SYNOPSIS
     This function is used to get the Enrollment Status Page configuration from the Graph API REST interface
     .DESCRIPTION
