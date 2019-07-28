@@ -9,6 +9,7 @@ This Script will document:
  - Device Enrollment Restrictions
  - Terms and Conditions
  - Applications (Only Assigned)
+ - Application Protection Policies
  - AutoPilot Configuration
  - Enrollment Page Configuration
  - Apple Push Certificate
@@ -23,11 +24,11 @@ Download the DocumentIntune.ps1 file and execute it with PowerShell.exe:
 
 ``` powershell
 
-powershell.exe -executionpolicy bypass -file DocumentIntune_002.ps1
+powershell.exe -executionpolicy bypass -file DocumentIntune.ps1
 
 ```
 
-The Documentation will be created in the same folder like the DocumentIntune_002.ps1 file resides.
+The Documentation will be created in the same folder like the DocumentIntune.ps1 file resides.
 
 **Important:** Before using the Script the first time, you have to ensure, that you have installed the Microsoft.Graph.Intune and PSWord Module. To do that, you have to start PowerShell as an Adminstrator and install them:
 

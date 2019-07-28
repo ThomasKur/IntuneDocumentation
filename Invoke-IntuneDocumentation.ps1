@@ -1,16 +1,20 @@
+#Requires -Modules Microsoft.Graph.Intune,PSWord
+#Requires -Version 5
+
 <#
 .DESCRIPTION
-This Script documents an Intune Tenand with almostb all settings, which are available over the Graph API.
-
+This Script documents an Intune Tenant with almost all settings, which are available over the Graph API.
+NOTE: This no longer does Conditional Access
 The Script is using the PSWord and Microsoft.Graph.Intune Module. Therefore you have to install them first.
 
 .EXAMPLE
-
+.\Invoke-IntuneDocumentation.ps1
 
 .NOTES
 Author: Thomas Kurth/baseVISION
 Co-Author: jflieben
-Date:   28.7.2019
+Co-Author: Robin Dadswell
+Date:   28.07.2019
 
 History
     001: First Version
@@ -25,42 +29,36 @@ History
     009: Thomas Kurth: Adding AutoPilot Information
     010: Thomas Kurth: Complete rewriting and using the Intune PowerShell module
          Added Partner Information
-    011: Thomas Kurth: Added new sections:
+    011: Added Application Protection Policies
+         Tidied up to meet PSScriptAnalyzer Best Practice and removed some whitespace
+    012: Thomas Kurth: Added new sections:
             - Enrollment Page Configuration
             - Apple Push Certificate
             - Apple VPP
             - Device Categories
             - Exchange Connector
-
-
 ExitCodes:
     99001: Could not Write to LogFile
     99002: Could not Write to Windows Log
     99003: Could not Set ExitMessageRegistry
-
 #>
 [CmdletBinding()]
 Param()
 ## Manual Variable Definition
 ########################################################
 $DebugPreference = "Continue"
-$ScriptVersion = "011"
+$ScriptVersion = "012"
 $ScriptName = "DocumentIntune"
-
 $LogFilePathFolder     = Join-Path -Path $Env:TEMP -ChildPath $ScriptName
-
 # Log Configuration
 $DefaultLogOutputMode  = "Console" # "Console-LogFile","Console-WindowsEvent","LogFile-WindowsEvent","Console","LogFile","WindowsEvent","All"
 $DefaultLogWindowsEventSource = $ScriptName
 $DefaultLogWindowsEventLog = "CustomPS"
-
 $MaxStringLengthSettings = 350
 $DocumentName = "DocumentIntune.docx"
 $DateTimeRegex = "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z" 
- 
 #region Functions
 ########################################################
-
 function Write-Log {
     <#
     .DESCRIPTION
@@ -103,14 +101,12 @@ function Write-Log {
         [Exception]
         $Exception
     )
-    
     $DateTimeString = Get-Date -Format "yyyy-MM-dd HH:mm:sszz"
     $Output = ($DateTimeString + "`t" + $Type.ToUpper() + "`t" + $Message)
     if($Exception){
         $ExceptionString =  ("[" + $Exception.GetType().FullName + "] " + $Exception.Message)
         $Output = "$Output - $ExceptionString"
     }
-
     if ($OutputMode -eq "Console" -OR $OutputMode -eq "Console-LogFile" -OR $OutputMode -eq "Console-WindowsEvent" -OR $OutputMode -eq "All") {
         if($Type -eq "Error"){
             Write-Error $output
@@ -122,7 +118,6 @@ function Write-Log {
             Write-Verbose $output -Verbose
         }
     }
-    
     if ($OutputMode -eq "LogFile" -OR $OutputMode -eq "Console-LogFile" -OR $OutputMode -eq "LogFile-WindowsEvent" -OR $OutputMode -eq "All") {
         try {
             Add-Content $LogFilePath -Value $Output -ErrorAction Stop
@@ -130,7 +125,6 @@ function Write-Log {
             exit 99001
         }
     }
-
     if ($OutputMode -eq "Console-WindowsEvent" -OR $OutputMode -eq "WindowsEvent" -OR $OutputMode -eq "LogFile-WindowsEvent" -OR $OutputMode -eq "All") {
         try {
             New-EventLog -LogName $DefaultLogWindowsEventLog -Source $DefaultLogWindowsEventSource -ErrorAction SilentlyContinue
@@ -153,7 +147,6 @@ function Write-Log {
         }
     }
 }
-
 function New-Folder{
     <#
     .DESCRIPTION
@@ -173,7 +166,6 @@ function New-Folder{
         [string]$Path
     )
 	# Check if the folder Exists
-
 	if (Test-Path $Path) {
 		Write-Log "Folder: $Path Already Exists"
 	} else {
@@ -181,7 +173,6 @@ function New-Folder{
 		Write-Log "Creating $Path"
 	}
 }
-
 Function Get-WindowsAutopilotConfig(){
     <#
     .SYNOPSIS
@@ -194,7 +185,6 @@ Function Get-WindowsAutopilotConfig(){
     .NOTES
     NAME: Get-WindowsAutopilotConfig
     #>
-
     try {
         $uri = "https://graph.microsoft.com/Beta/deviceManagement/windowsAutopilotDeploymentProfiles"
         (Invoke-MSGraphRequest -Url $uri -HttpMethod GET).Value
@@ -262,7 +252,7 @@ Function Format-MsGraphData(){
     $Value = $Value -replace "windows","win"
     $Value = $Value -replace "StoreforBusiness","SfB"
     $Value = $Value -replace "@odata.",""
-    if($Value -ne $null -and $Value -match "@{*"){
+    if($null -ne $Value -and $Value -match "@{*"){
         $Value = $Value -replace "@{",""
         $Value = $Value -replace "}",""
         $Value = $Value -replace ";",""
@@ -272,57 +262,25 @@ Function Format-MsGraphData(){
             [DateTime]$Date = ([DateTime]::Parse($Value))
             $Value = "$($Date.ToShortDateString()) $($Date.ToShortTimeString())"
         } catch {
-        
         }
     }
     return $value
 }
-
 #endregion
-
 #region Dynamic Variables and Parameters
 ########################################################
-
 $LogFilePath = "$LogFilePathFolder\{0}_{1}_{2}.log" -f ($ScriptName -replace ".ps1", ''),$ScriptVersion,(Get-Date -uformat %Y%m%d%H%M)
-
 #endregion
-
 #region Initialization
 ########################################################
-
 New-Folder $LogFilePathFolder
 Write-Log "Start Script $Scriptname"
-
-#region Loading Modules
-
-Write-Log "Checking for Intune module..."
-$IntuneModule = Get-Module -Name "Microsoft.Graph.Intune" -ListAvailable
-if ($IntuneModule -eq $null) {
-    write-Log "Intune Powershell module not installed..." -Type Warn
-    write-Log "Install by running 'Install-Module Microsoft.Graph.Intune' from an elevated PowerShell prompt" -Type Warn
-    write-Log "Script can't continue..." -Type Warn
-    exit
-}
-Write-Log "Checking for PSWord module..."
-$PSWordModule = Get-Module -Name "PSWord" -ListAvailable
-if ($PSWordModule -eq $null) {
-    write-Log "PSWord Powershell module not installed..." -Type Warn
-    write-Log "Install by running 'Install-Module PSWord' from an elevated PowerShell prompt" -Type Warn
-    write-Log "Script can't continue..." -Type Warn
-    exit
-}
-    
-#endregion
 #region Authentication
 Connect-MSGraph
-
-
 #endregion
 #endregion
-
 #region Main Script
 ########################################################
-
 #region Save Path
 try{
     $SaveFileDialog = New-Object windows.forms.savefiledialog
@@ -346,13 +304,9 @@ try{
 
 }
 #endregion
-
-
 #region Document Apps
-
-
 $Intune_Apps = @()
-Get-IntuneMobileApp | foreach {
+Get-IntuneMobileApp | ForEach-Object {
     $App_Assignment = Get-IntuneMobileAppAssignment -mobileAppId $_.id
     if($App_Assignment){
         $Intune_App = New-Object -TypeName PSObject
@@ -362,7 +316,6 @@ Get-IntuneMobileApp | foreach {
         $Assignments = @()
         foreach($Assignment in $App_Assignment) {
             $Assignments += "$((Get-AADGroup -groupid $Assignment.target.groupId).displayName)`n - Intent:$($Assignment.intent)"
-
         }
         $Intune_App | Add-Member Noteproperty "Assignments" ($Assignments -join "`n")
         $Intune_Apps += $Intune_App
@@ -370,29 +323,47 @@ Get-IntuneMobileApp | foreach {
 } 
 Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Applications"
 $Intune_Apps | Sort-Object Publisher,DisplayName | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
-
+#endregion
+#region Document App protection policies
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "App Protection Policies"
+$MAMs = Get-IntuneAppProtectionPolicy
+foreach($MAM in $MAMs){
+    write-Log "App Protection Policy: $($MAM.displayName)"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $MAM.displayName
+    $ht2 = @{}
+    $MAM.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
+    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+    $id = $APP.id
+    $MAMA = Get-IntuneAppProtectionPolicyAndroidAssignment -deviceCompliancePolicyId $id
+    if($MAMA){
+        write-Log "Getting Compliance Policy assignment..."
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
+        if($APPA.count -gt 1){
+            $Assignments = @()
+            foreach($group in $MAMA){
+                $Assignments += (Get-AADGroup -groupid $group.target.groupId).displayName
+            }
+            $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12
+        } else {
+            (Get-AADGroup -groupid $MAMA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath -Size 12
+        }
+    }
+}
 #endregion
 #region Document Compliance Policies
-
 Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Compliance Policies"
 $DCPs = Get-IntuneDeviceCompliancePolicy
 foreach($DCP in $DCPs){
-
     write-Log "Device Compliance Policy: $($DCP.displayName)"
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $DCP.displayName
-    
     $ht2 = @{}
     $DCP.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
-
     $id = $DCP.id
     $DCPA = Get-IntuneDeviceCompliancePolicyAssignment -deviceCompliancePolicyId $id
-
     if($DCPA){
         write-Log "Getting Compliance Policy assignment..."
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
-        
-
         if($DCPA.count -gt 1){
             $Assignments = @()
             foreach($group in $DCPA){
@@ -402,13 +373,10 @@ foreach($DCP in $DCPs){
         } else {
             (Get-AADGroup -groupid $DCPA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath -Size 12
         }
-        
     }
 }
-
 #endregion
 #region Document T&C
-
 write-Log "Terms and Conditions"
 $GAndT = Get-IntuneTermsAndConditions
 if($GAndT){
@@ -417,27 +385,20 @@ if($GAndT){
 }
 #endregion
 #region Document EnrollmentRestrictions
-
 Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Enrollment Restrictions"
 $Restrictions = Get-IntuneDeviceEnrollmentConfiguration
-
 foreach($restriction in $Restrictions){
-
     $ht2 = @{}
-    $restriction.psobject.properties | Foreach { if($_.Name -ne "@odata.type"){$ht2[(Format-MsGraphData $($_.Name))] = ((Format-MsGraphData "$($_.Value) "))} }
+    $restriction.psobject.properties | ForEach-Object { if($_.Name -ne "@odata.type"){$ht2[(Format-MsGraphData $($_.Name))] = ((Format-MsGraphData "$($_.Value) "))} }
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
 }
 #endregion
 #region Document Device Configurations
-
 Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Configuration"
 $DCPs = Get-IntuneDeviceConfigurationPolicy
-
 foreach($DCP in $DCPs){
-
     write-Log "Device Compliance Policy: $($DCP.displayName)"
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $DCP.displayName
-    
     $ht2 = @{}
     $DCP.psobject.properties | ForEach-Object { 
         $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
@@ -447,14 +408,11 @@ foreach($DCP in $DCPs){
             }
     }
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
-
     $id = $DCP.id
     $DCPA = Get-IntuneDeviceConfigurationPolicyAssignment -deviceConfigurationId $id
-
     if($DCPA){
         write-Log "Getting Compliance Policy assignment..."
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
-        
         if($DCPA.count -gt 1){
             $Assignments = @()
             foreach($group in $DCPA){
@@ -464,20 +422,15 @@ foreach($DCP in $DCPs){
         } else {
             $Assignments += (Get-AADGroup -groupid $DCPA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath  -Size 12
         }
-        
     }
 }
-
 #endregion
-
 #region AutoPilot Configuration
 Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "AutoPilot Configuration"
 $AutoPilotConfigs = Get-WindowsAutopilotConfig
-
 foreach($APC in $AutoPilotConfigs){
     write-Log "AutoPilot Config: $($APC.displayName)"
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $APC.displayName
-    
     $ht2 = @{}
     $APC.psobject.properties | ForEach-Object { 
         $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
@@ -487,7 +440,6 @@ foreach($APC in $AutoPilotConfigs){
             }
     }
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
-  
 }
 #endregion
 
@@ -586,14 +538,11 @@ $exch.psobject.properties | ForEach-Object {
 
 
 #region Partner Configuration
-
 Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Partner Configuration"
 $partnerConfigs = Get-IntuneDeviceManagementPartner
-
 foreach($partnerConfig in $partnerConfigs){
     write-Log "Partner Config: $($partnerConfig.displayName)"
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $partnerConfig.displayName
-    
     $ht2 = @{}
     $partnerConfig.psobject.properties | ForEach-Object { 
         $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
@@ -605,14 +554,9 @@ foreach($partnerConfig in $partnerConfigs){
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
   
 }
-
 #endregion
-
 #endregion
-
 #region Finishing
 ########################################################
-
 Write-Log "End Script $Scriptname"
-
 #endregion
