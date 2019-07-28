@@ -10,6 +10,12 @@ This Script will document:
  - Terms and Conditions
  - Applications (Only Assigned)
  - AutoPilot Configuration
+ - Enrollment Page Configuration
+ - Apple Push Certificate
+ - Apple VPP
+ - Device Categories
+ - Exchange Connector
+
 
 # Usage
 

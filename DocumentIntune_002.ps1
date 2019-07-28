@@ -10,7 +10,7 @@ The Script is using the PSWord and Microsoft.Graph.Intune Module. Therefore you 
 .NOTES
 Author: Thomas Kurth/baseVISION
 Co-Author: jflieben
-Date:   9.5.2019
+Date:   28.7.2019
 
 History
     001: First Version
@@ -23,8 +23,14 @@ History
     007: Better formating and Option to specify the Save As location
     008: Jos Lieben: Fixed a few things and added Conditional Access Policies
     009: Thomas Kurth: Adding AutoPilot Information
-    010: Complete rewriting and using the Intune PowerShell module
+    010: Thomas Kurth: Complete rewriting and using the Intune PowerShell module
          Added Partner Information
+    011: Thomas Kurth: Added new sections:
+            - Enrollment Page Configuration
+            - Apple Push Certificate
+            - Apple VPP
+            - Device Categories
+            - Exchange Connector
 
 
 ExitCodes:
@@ -38,7 +44,7 @@ Param()
 ## Manual Variable Definition
 ########################################################
 $DebugPreference = "Continue"
-$ScriptVersion = "010"
+$ScriptVersion = "011"
 $ScriptName = "DocumentIntune"
 
 $LogFilePathFolder     = Join-Path -Path $Env:TEMP -ChildPath $ScriptName
@@ -191,6 +197,34 @@ Function Get-WindowsAutopilotConfig(){
 
     try {
         $uri = "https://graph.microsoft.com/Beta/deviceManagement/windowsAutopilotDeploymentProfiles"
+        (Invoke-MSGraphRequest -Url $uri -HttpMethod GET).Value
+    } catch {
+        $ex = $_.Exception
+        $errorResponse = $ex.Response.GetResponseStream()
+        $reader = New-Object System.IO.StreamReader($errorResponse)
+        $reader.BaseStream.Position = 0
+        $reader.DiscardBufferedData()
+        $responseBody = $reader.ReadToEnd();
+        Write-Log "Response content:`n$responseBody" -Type Error
+        Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
+    }
+}
+
+Function Get-EnrollmentStatusPage(){
+    <#
+    .SYNOPSIS
+    This function is used to get the Enrollment Status Page configuration from the Graph API REST interface
+    .DESCRIPTION
+    The function connects to the Graph API Interface and gets the Enrollment Status Page Configuration
+    .EXAMPLE
+    Get-EnrollmentStatusPage
+    Returns the Enrollment Status Page Configuration configured in Intune
+    .NOTES
+    NAME: Get-EnrollmentStatusPage
+    #>
+
+    try {
+        $uri = "https://graph.microsoft.com/Beta/deviceManagement/deviceEnrollmentConfigurations"
         (Invoke-MSGraphRequest -Url $uri -HttpMethod GET).Value
     } catch {
         $ex = $_.Exception
@@ -456,6 +490,100 @@ foreach($APC in $AutoPilotConfigs){
   
 }
 #endregion
+
+#region Enrollment Status Page Configuration
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Enrollment Status Pages"
+$EnrollmentStatusPage = Get-EnrollmentStatusPage
+
+foreach($ESP in $EnrollmentStatusPage){
+    write-Log "Enrollment Status Page Config: $($ESP.displayName)"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $ESP.displayName
+    
+    $ht2 = @{}
+    $ESP.psobject.properties | ForEach-Object { 
+        $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
+                "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
+            } else {
+                "$((Format-MsGraphData "$($_.Value)")) "
+            }
+    }
+    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+  
+}
+#endregion
+
+#region Apple Push Certificate
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Apple Configurations"
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "Apple Push Certificate"
+$APNs = Get-IntuneApplePushNotificationCertificate
+
+foreach($APN in $APNs){
+    write-Log "AutoPilot Config: $($APN.appleIdentifier)"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text $APN.appleIdentifier
+    
+    $ht2 = @{}
+    $APN.psobject.properties | ForEach-Object { 
+        $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
+                "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
+            } else {
+                "$((Format-MsGraphData "$($_.Value)")) "
+            }
+    }
+    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+  
+}
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "Apple VPP Tokens"
+$VPPs = Get-IntuneVppToken
+
+foreach($VPP in $VPPs){
+    write-Log "VPP Config: $($VPP.appleId)"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text $VPP.appleId
+    
+    $ht2 = @{}
+    $VPP.psobject.properties | ForEach-Object { 
+        $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
+                "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
+            } else {
+                "$((Format-MsGraphData "$($_.Value)")) "
+            }
+    }
+    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+  
+}
+#endregion
+
+#region Device Categories
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Categories"
+$Cats = Get-IntuneDeviceCategory
+write-Log "Device Categories: $($Cats.count)"
+foreach($Cat in $Cats){
+Add-WordText -FilePath $FullDocumentationPath -Text " - " + $Cat.displayName -Size 10
+}
+
+#endregion
+
+#region Exchange Connection
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Exchange Connector"
+$exch = Get-IntuneExchangeConnector
+write-Log "Exchange Connector: $($exch.serverName)"
+$ht2 = @{}
+$exch.psobject.properties | ForEach-Object { 
+    $ht2[(Format-MsGraphData $($_.Name))] = if((Format-MsGraphData "$($_.Value)").Length -gt $MaxStringLengthSettings){
+            "$((Format-MsGraphData "$($_.Value)").substring(0, $MaxStringLengthSettings))..."
+        } else {
+            "$((Format-MsGraphData "$($_.Value)")) "
+        }
+}
+($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+
+#endregion
+
+
+#General Settings
+# On Prem Cond Access Get-IntuneConditionalAccessSetting
+# MAM Settings
+
+
 
 #region Partner Configuration
 
