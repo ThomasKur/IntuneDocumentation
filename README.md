@@ -51,6 +51,8 @@ For any issues or feedback related to this module, please register for GitHub, a
 
 @joslieben for extending and improving the script
 
+@dads07a for adding Application protection Policies to the documentation
+
 @mirkocolemberg for the help and testing of the script.
 
 ![Created by baseVISION](https://www.basevision.ch/wp-content/uploads/2015/12/baseVISION-Logo_RGB.png)
