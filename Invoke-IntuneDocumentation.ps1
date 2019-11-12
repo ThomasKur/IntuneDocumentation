@@ -508,7 +508,7 @@ Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Ca
 $Cats = Get-IntuneDeviceCategory
 write-Log "Device Categories: $($Cats.count)"
 foreach($Cat in $Cats){
-Add-WordText -FilePath $FullDocumentationPath -Text " - " + $Cat.displayName -Size 10
+Add-WordText -FilePath $FullDocumentationPath -Text (" - " + $Cat.displayName) -Size 10
 }
 
 #endregion
