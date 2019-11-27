@@ -380,7 +380,7 @@ write-Log "Terms and Conditions"
 $GAndT = Get-IntuneTermsAndConditions
 if($GAndT){
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Terms and Conditions"
-    $GAndT | ForEach-Object { $_ | Select-Object -Property id,createdDateTime,modifiedDateTime,displayName,title,version } | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
+    $GAndT | ForEach-Object { $_ | Select-Object -Property id,createdDateTime,lastModifiedDateTime,displayName,title,version } | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
 }
 #endregion
 #region Document EnrollmentRestrictions
