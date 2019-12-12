@@ -245,8 +245,12 @@ Function Format-MsGraphData(){
         [Parameter(Mandatory=$false)]
         [AllowEmptyString()]
         [AllowNull()]
-        [String]$Value
+        $Value
     )
+    if($value -is [array]){
+        $value = $value -join ","
+    }
+    [string]$value = "$value"
     $Value = $Value -replace "#microsoft.graph.",""
     $Value = $Value -replace "windows","win"
     $Value = $Value -replace "StoreforBusiness","SfB"
@@ -314,7 +318,11 @@ Get-IntuneMobileApp | ForEach-Object {
         $Intune_App | Add-Member Noteproperty "Type" (Format-MsGraphData $_.'@odata.type')
         $Assignments = @()
         foreach($Assignment in $App_Assignment) {
-            $Assignments += "$((Get-AADGroup -groupid $Assignment.target.groupId).displayName)`n - Intent:$($Assignment.intent)"
+            if($null -ne $Assignment.target.groupId){
+                $Assignments += "$((Get-AADGroup -groupid $Assignment.target.groupId).displayName)`n - Intent:$($Assignment.intent)"
+            } else {
+                $Assignments += "$(($Assignment.target.'@odata.type' -replace "#microsoft.graph.",''))`n - Intent:$($Assignment.intent)"
+            }
         }
         $Intune_App | Add-Member Noteproperty "Assignments" ($Assignments -join "`n")
         $Intune_Apps += $Intune_App
@@ -332,10 +340,10 @@ foreach($MAM in $MAMs){
     $ht2 = @{}
     $MAM.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
-    $id = $APP.id
-    $MAMA = Get-IntuneAppProtectionPolicyAndroidAssignment -deviceCompliancePolicyId $id
+    $id = $MAM.id
+    $MAMA = Get-IntuneAppProtectionPolicyAndroidAssignment -androidManagedAppProtectionId $id
     if($MAMA){
-        write-Log "Getting Compliance Policy assignment..."
+        write-Log "Getting MAM Policy assignment..."
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
         if($APPA.count -gt 1){
             $Assignments = @()
@@ -415,11 +423,21 @@ foreach($DCP in $DCPs){
         if($DCPA.count -gt 1){
             $Assignments = @()
             foreach($group in $DCPA){
-                $Assignments += (Get-AADGroup -groupid $group.target.groupId).displayName
+                if($null -ne $group.target.groupId){
+                    $Assignments += (Get-AADGroup -groupid $group.target.groupId).displayName
+                } else {
+                    $Assignments += "$(($group.target.'@odata.type' -replace "#microsoft.graph.",''))"
+                }
+                
             }
             $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12
         } else {
-            $Assignments += (Get-AADGroup -groupid $DCPA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath  -Size 12
+            if($null -ne $DCPA.target.groupId){
+                (Get-AADGroup -groupid $DCPA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath  -Size 12
+            } else {
+                "$(($DCPA.target.'@odata.type' -replace "#microsoft.graph.",''))" | Add-WordText -FilePath $FullDocumentationPath  -Size 12
+            }
+            
         }
     }
 }
@@ -508,7 +526,7 @@ Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Ca
 $Cats = Get-IntuneDeviceCategory
 write-Log "Device Categories: $($Cats.count)"
 foreach($Cat in $Cats){
-Add-WordText -FilePath $FullDocumentationPath -Text " - " + $Cat.displayName -Size 10
+Add-WordText -FilePath $FullDocumentationPath -Text " - $($Cat.displayName)" -Size 10
 }
 
 #endregion
