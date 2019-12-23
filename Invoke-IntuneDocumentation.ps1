@@ -649,5 +649,6 @@ foreach($partnerConfig in $partnerConfigs){
 #endregion
 #region Finishing
 ########################################################
+Write-Log "Press Ctrl + A and then F9 to Update the table of contents and other dynamic fields in the Word document."
 Write-Log "End Script $Scriptname"
 #endregion
