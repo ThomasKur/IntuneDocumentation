@@ -355,6 +355,21 @@ try{
 
 }
 #endregion
+#region CopyTemplate
+if((Test-Path -Path $FullDocumentationPath)){
+    Write-Log "File already exists, does not use built-in template." -Type Warn
+} else {
+    Copy-Item "$PSScriptRoot\Template.docx" -Destination $FullDocumentationPath
+    Update-WordText -FilePath $FullDocumentationPath -ReplacingText "DATE" -NewText (Get-Date -Format "HH:mm dd.MM.yyyy")
+    try{
+        $org = Invoke-MSGraphRequest -Url /organization
+        Update-WordText -FilePath $FullDocumentationPath -ReplacingText "TENANT" -NewText $org.value.displayName
+    } catch{
+        Update-WordText -FilePath $FullDocumentationPath -ReplacingText "TENANT" -NewText ""
+    }
+    
+}
+#endregion
 #region Document Apps
 $Intune_Apps = @()
 Get-IntuneMobileApp | ForEach-Object {
