@@ -270,9 +270,6 @@ Function Get-DeviceManagementScripts(){
             $responseBody = $reader.ReadToEnd();
             Write-Log "Response content:`n$responseBody" -Type Error
             Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
-            
-            
-        
         }
 }
 Function Format-MsGraphData(){
@@ -516,7 +513,7 @@ foreach($PSScript in $PSScripts){
     "FileName: $($PSScript.fileName)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
     $PSScript.description | Add-WordText -FilePath $FullDocumentationPath -Size 12
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Script"
-    $PSScript.scriptContent | Add-WordText -FilePath $FullDocumentationPath -Size 10 -Italic -FontFamily Courier
+    $PSScript.scriptContent | Add-WordText -FilePath $FullDocumentationPath -Size 10 -Italic
 }
 #endregion
 #region AutoPilot Configuration
