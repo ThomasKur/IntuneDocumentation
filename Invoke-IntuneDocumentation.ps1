@@ -197,6 +197,7 @@ Function Get-WindowsAutopilotConfig(){
         $responseBody = $reader.ReadToEnd();
         Write-Log "Response content:`n$responseBody" -Type Error
         Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
+        
     }
 }
 Function Get-EnrollmentStatusPage(){
@@ -226,7 +227,54 @@ Function Get-EnrollmentStatusPage(){
         Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
     }
 }
+Function Get-DeviceManagementScripts(){
+    <#
+        .SYNOPSIS
+        This function is used to get the Intune PowerShell Scripts from the Graph API REST interface
+        .DESCRIPTION
+        The function connects to the Graph API Interface and gets the Intune PowerShell Scripts including the scripts
+        .EXAMPLE
+        Get-DeviceManagementScripts
+        Returns the Enrollment Status Page Configuration configured in Intune
+        .NOTES
+        NAME: Get-DeviceManagementScripts
+        #>
+    
+        try {
+            $uri = "https://graph.microsoft.com/Beta/deviceManagement/deviceManagementScripts"
+            $request= (Invoke-MSGraphRequest -Url $uri -HttpMethod GET)
+            $allScripts= @()
 
+            $request.value.GetEnumerator() | ForEach-Object {
+
+                $currentScript =Invoke-MSGraphRequest -HttpMethod GET -Url "https://graph.microsoft.com/Beta/deviceManagement/deviceManagementScripts/$($PSItem.id)"
+                
+                $allScripts += [PSCustomObject]@{
+                    id = $currentScript.id
+                    displayName = $currentScript.displayName
+                    description = $currentScript.description
+                    enforceSignatureCheck = $PSItem.enforceSignatureCheck
+                    runAs32Bit = $PSItem.runAs32Bit
+                    runAsAccount = $PSItem.runAsAccount
+                    fileName = $PSItem.fileName
+                    scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($currentScript.scriptContent))
+                }
+            }
+            $allScripts
+        } catch {
+            $ex = $_.Exception
+            $errorResponse = $ex.Response.GetResponseStream()
+            $reader = New-Object System.IO.StreamReader($errorResponse)
+            $reader.BaseStream.Position = 0
+            $reader.DiscardBufferedData()
+            $responseBody = $reader.ReadToEnd();
+            Write-Log "Response content:`n$responseBody" -Type Error
+            Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
+            
+            
+        
+        }
+}
 Function Format-MsGraphData(){
     <#
     .SYNOPSIS
@@ -341,7 +389,7 @@ foreach($MAM in $MAMs){
     $MAM.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
     $id = $MAM.id
-    $MAMA = Get-IntuneAppProtectionPolicyAndroidAssignment -androidManagedAppProtectionId $id
+    $MAMA = Get-IntuneAppProtectionPolicyAndroidAssignment -androidManagedAppProtectionId $id -androidManagedAppProtectionODataType ($MAM.'@odata.type')
     if($MAMA){
         write-Log "Getting MAM Policy assignment..."
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
@@ -440,6 +488,20 @@ foreach($DCP in $DCPs){
             
         }
     }
+}
+#endregion
+#region Device Management Scripts (PowerShell)
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Management Scripts"
+$PSScripts = Get-DeviceManagementScripts
+foreach($PSScript in $PSScripts){
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $PSScript.displayName
+    "EnforceSignatureCheck: $($PSScript.enforceSignatureCheck)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
+    "RunAs32Bit: $($PSScript.runAs32Bit)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
+    "RunAsAccount: $($PSScript.runAsAccount)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
+    "FileName: $($PSScript.fileName)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
+    $PSScript.description | Add-WordText -FilePath $FullDocumentationPath -Size 12
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Script"
+    $PSScript.scriptContent | Add-WordText -FilePath $FullDocumentationPath -Size 10 -Italic -FontFamily Courier
 }
 #endregion
 #region AutoPilot Configuration
