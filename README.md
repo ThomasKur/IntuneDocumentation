@@ -23,7 +23,7 @@ This Script will document:
 
 # Usage
 
-Download the Template.docx and the DocumentIntune.ps1 file and execute it with PowerShell.exe:
+Download the Template.docx and the DocumentIntune.ps1 file to the same folder and execute the ps1 file with PowerShell.exe:
 
 ``` powershell
 
