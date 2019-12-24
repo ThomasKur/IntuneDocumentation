@@ -37,6 +37,11 @@ History
             - Apple VPP
             - Device Categories
             - Exchange Connector
+    013: Thomas Kurth: Added new Sections:
+            - PowerShellScripts
+            - Application COnfiguration
+
+            Added new Template functionality
 ExitCodes:
     99001: Could not Write to LogFile
     99002: Could not Write to Windows Log
@@ -401,9 +406,38 @@ foreach($MAM in $MAMs){
     $MAM.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
     $id = $MAM.id
-    $MAMA = Get-IntuneAppProtectionPolicyAndroidAssignment -androidManagedAppProtectionId $id -androidManagedAppProtectionODataType ($MAM.'@odata.type')
+    $MAMA = Get-DeviceAppManagement_AndroidManagedAppProtections_Assignments -androidManagedAppProtectionId $id -androidManagedAppProtectionODataType microsoft.graph.androidManagedAppProtection
+    $MAMA = Get-DeviceAppManagement_IosManagedAppProtections_Assignments -iosManagedAppProtectionId $id -iosManagedAppProtectionODataType microsoft.graph.iosManagedAppProtection
     if($MAMA){
         write-Log "Getting MAM Policy assignment..."
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
+        if($APPA.count -gt 1){
+            $Assignments = @()
+            foreach($group in $MAMA){
+                $Assignments += (Get-AADGroup -groupid $group.target.groupId).displayName
+            }
+            $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12
+        } else {
+            (Get-AADGroup -groupid $MAMA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath -Size 12
+        }
+    }
+}
+#endregion
+#region Document App configuration policies
+Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "App Configuration Policies"
+$MACs = Get-DeviceAppManagement_MobileAppConfigurations
+foreach($MAC in $MACs){
+    write-Log "App Protection Policy: $($MAC.displayName)"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $MAC.displayName
+    $ht2 = @{}
+    $MAC.encodedSettingXml = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($MAC.encodedSettingXml))
+    $MAC.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
+    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+    $id = $MAM.id
+     
+    $MAMA = Get-DeviceAppManagement_MobileAppConfigurations_Assignments -managedDeviceMobileAppConfigurationId $id
+    if($MAMA){
+        write-Log "Getting Mobile Application Configuration assignment..."
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
         if($APPA.count -gt 1){
             $Assignments = @()

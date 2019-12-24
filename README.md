@@ -16,11 +16,14 @@ This Script will document:
  - Apple VPP
  - Device Categories
  - Exchange Connector
+ - Application Configuration
+ - PowerShell Scripts
+
 
 
 # Usage
 
-Download the DocumentIntune.ps1 file and execute it with PowerShell.exe:
+Download the Template.docx and the DocumentIntune.ps1 file and execute it with PowerShell.exe:
 
 ``` powershell
 
@@ -28,7 +31,7 @@ powershell.exe -executionpolicy bypass -file Invoke-IntuneDocumentation.ps1
 
 ```
 
-The Documentation will be created in the same folder like the Invoke-IntuneDocumentation.ps1 file resides.
+You will get a prompt to select the documentation save location.
 
 **Important:** Before using the Script the first time, you have to ensure, that you have installed the Microsoft.Graph.Intune and PSWord Module. To do that, you have to start PowerShell as an Adminstrator and install them:
 
