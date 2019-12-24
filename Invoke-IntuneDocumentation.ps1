@@ -507,11 +507,6 @@ Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Ma
 $PSScripts = Get-DeviceManagementScripts
 foreach($PSScript in $PSScripts){
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $PSScript.displayName
-    <#
-    "EnforceSignatureCheck: $($PSScript.enforceSignatureCheck)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
-    "RunAs32Bit: $($PSScript.runAs32Bit)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
-    "RunAsAccount: $($PSScript.runAsAccount)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
-    "FileName: $($PSScript.fileName)" | Add-WordText -FilePath $FullDocumentationPath -Size 12#>
     $ht2 = @{}
     $PSScript.psobject.properties | ForEach-Object { 
         if($_.Name -ne "scriptContent"){
