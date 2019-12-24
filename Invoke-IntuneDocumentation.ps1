@@ -507,13 +507,21 @@ Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Ma
 $PSScripts = Get-DeviceManagementScripts
 foreach($PSScript in $PSScripts){
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $PSScript.displayName
+    <#
     "EnforceSignatureCheck: $($PSScript.enforceSignatureCheck)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
     "RunAs32Bit: $($PSScript.runAs32Bit)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
     "RunAsAccount: $($PSScript.runAsAccount)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
-    "FileName: $($PSScript.fileName)" | Add-WordText -FilePath $FullDocumentationPath -Size 12
-    $PSScript.description | Add-WordText -FilePath $FullDocumentationPath -Size 12
+    "FileName: $($PSScript.fileName)" | Add-WordText -FilePath $FullDocumentationPath -Size 12#>
+    $ht2 = @{}
+    $PSScript.psobject.properties | ForEach-Object { 
+        if($_.Name -ne "scriptContent"){
+            $ht2[(Format-MsGraphData $($_.Name))] = "$($_.Value)"
+        }
+    }
+    ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+    
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Script"
-    $PSScript.scriptContent | Add-WordText -FilePath $FullDocumentationPath -Size 10 -Italic
+    $PSScript.scriptContent | Add-WordText -FilePath $FullDocumentationPath -Size 10 -Italic -FontFamily "Courier New"
 }
 #endregion
 #region AutoPilot Configuration
