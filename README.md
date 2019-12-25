@@ -4,24 +4,22 @@ Automatic Intune Documentation to simplify the life of admins and consultants.
 
 This Script will document:
 
- - Configuration Policies
- - Compliance Policies
- - Device Enrollment Restrictions
- - Terms and Conditions
- - Applications (Only Assigned)
- - Application Protection Policies
- - AutoPilot Configuration
- - Enrollment Page Configuration
- - Apple Push Certificate
- - Apple VPP
- - Device Categories
- - Exchange Connector
- - Application Configuration
- - PowerShell Scripts
+- Configuration Policies
+- Compliance Policies
+- Device Enrollment Restrictions
+- Terms and Conditions
+- Applications (Only Assigned)
+- Application Protection Policies
+- AutoPilot Configuration
+- Enrollment Page Configuration
+- Apple Push Certificate
+- Apple VPP
+- Device Categories
+- Exchange Connector
+- Application Configuration
+- PowerShell Scripts
 
-
-
-# Usage
+## Usage
 
 Download the Template.docx and the DocumentIntune.ps1 file to the same folder and execute the ps1 file with PowerShell.exe:
 
@@ -42,11 +40,11 @@ Install-Module PSWord
 
 ```
 
-# Issues / Feedback
+## Issues / Feedback
 
 For any issues or feedback related to this module, please register for GitHub, and post your inquiry to this project's issue tracker.
 
-# Thanks to
+## Thanks to
 
 @Microsoftgraph for the PowerShell Examples: https://github.com/microsoftgraph/powershell-intune-samples
 
