@@ -21,7 +21,7 @@ This Script will document:
 
 ## Usage
 
-Download the Template.docx and the DocumentIntune.ps1 file to the same folder and execute the ps1 file with PowerShell.exe:
+Download the Template.docx and the Invoke-IntuneDocumentation.ps1 file to the same folder and execute the ps1 file with PowerShell.exe:
 
 ``` powershell
 
@@ -46,9 +46,9 @@ For any issues or feedback related to this module, please register for GitHub, a
 
 ## Thanks to
 
-@Microsoftgraph for the PowerShell Examples: https://github.com/microsoftgraph/powershell-intune-samples
+@Microsoftgraph for the PowerShell Examples: <https://github.com/microsoftgraph/powershell-intune-samples>
 
-@guidooliveira for the PSWord Module, which enables the creation of the Word file. https://github.com/guidooliveira/PSWord
+@guidooliveira for the PSWord Module, which enables the creation of the Word file. <https://github.com/guidooliveira/PSWord>
 
 @joslieben for extending and improving the script
 
