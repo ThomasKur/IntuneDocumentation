@@ -18,6 +18,7 @@ This Script will document:
 - Exchange Connector
 - Application Configuration
 - PowerShell Scripts
+- ADMX backed Configuration Profiles
 
 ## Usage
 

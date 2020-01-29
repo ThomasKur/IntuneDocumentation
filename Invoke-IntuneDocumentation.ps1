@@ -40,8 +40,11 @@ History
     013: Thomas Kurth: Added new Sections:
             - PowerShellScripts
             - Application COnfiguration
+            - Added new Template functionality
 
-            Added new Template functionality
+    014: Thomas Kurth 
+            - Document ADMX backed Profiles
+            
 ExitCodes:
     99001: Could not Write to LogFile
     99002: Could not Write to Windows Log
@@ -52,7 +55,7 @@ Param()
 ## Manual Variable Definition
 ########################################################
 $DebugPreference = "Continue"
-$ScriptVersion = "012"
+$ScriptVersion = "014"
 $ScriptName = "DocumentIntune"
 $LogFilePathFolder     = Join-Path -Path $Env:TEMP -ChildPath $ScriptName
 # Log Configuration
@@ -277,6 +280,85 @@ Function Get-DeviceManagementScripts(){
             Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
         }
 }
+Function Get-ConditionalAccess(){
+    <#
+    .SYNOPSIS
+    This function is used to get the Conditional Access from the Graph API REST interface
+    .DESCRIPTION
+    The function connects to the Graph API Interface and gets the Azure AD Conditional Access Configuration
+    .EXAMPLE
+    Get-ConditionalAccess
+    Returns the Conditional Access Configuration configured in AzureAD
+    .NOTES
+    NAME: Get-ConditionalAccess
+    #>
+    try {
+        $uri = "https://graph.microsoft.com/Beta/conditionalAccess/policies"
+        (Invoke-MSGraphRequest -Url $uri -HttpMethod GET).Value
+    } catch {
+        $ex = $_.Exception
+        $errorResponse = $ex.Response.GetResponseStream()
+        $reader = New-Object System.IO.StreamReader($errorResponse)
+        $reader.BaseStream.Position = 0
+        $reader.DiscardBufferedData()
+        $responseBody = $reader.ReadToEnd();
+        Write-Log "Response content:`n$responseBody" -Type Error
+        Write-Log "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)" -Type Error
+        
+    }
+}
+
+Function Get-ADMXBasedConfigurationProfiles(){
+    <#
+    .SYNOPSIS
+    This function is used to get the ADMX Policies from the Graph API REST interface
+    .DESCRIPTION
+    The function connects to the Graph API Interface and gets the Intune ADMX Configuration
+    .EXAMPLE
+    Get-ADMXBasedConfigurationProfiles
+    Returns the ADMX based Configuration Profiles configured in Intune
+    .NOTES
+    NAME: Get-ADMXBasedConfigurationProfiles
+    #>
+    try {
+        Update-MSGraphEnvironment -SchemaVersion 'beta'
+        Connect-MSGraph
+        $Policies = Invoke-MSGraphRequest -HttpMethod GET -Url "/deviceManagement/groupPolicyConfigurations"
+        $return = @()
+        foreach($Policy in $Policies.value){
+            $return2 = @()
+            $values = Invoke-MSGraphRequest -HttpMethod GET -Url "/deviceManagement/groupPolicyConfigurations/$($Policy.Id)/definitionValues"
+            foreach($value in $values.value){
+                try{
+                    $definition = (Invoke-MSGraphRequest -HttpMethod GET -Url "/deviceManagement/groupPolicyConfigurations/$($Policy.Id)/definitionValues/$($value.id)/definition")
+                    $res = Invoke-MSGraphRequest -HttpMethod GET -Url "/deviceManagement/groupPolicyConfigurations/$($Policy.Id)/definitionValues/$($value.id)/presentationValues"
+                    $return2 += [PSCustomObject]@{ 
+                        DisplayName = $definition.displayName
+                        #ExplainText = $definition.explainText
+                        Scope = $definition.classType
+                        Path = $definition.categoryPath
+                        SupportedOn = $definition.supportedOn
+                        Enabled = $value.enabled
+                        Value = if($res.value.value.GetType().baseType.Name -eq "Array"){ $res.value.value -join ", "  }else { $res.value.value }
+                    }
+                } catch {
+
+                }
+            }
+            $return += [PSCustomObject]@{ 
+                DisplayName = $Policy.displayName
+                Settings = $return2
+            }
+        }
+        Update-MSGraphEnvironment -SchemaVersion v1.0
+        Connect-MSGraph
+        return $return
+    } catch {     
+        Write-Log "Response content:`n$responseBody" -Type Error
+        Write-Log "Failed to get ADMX based Intune Policies." -Type Error -Exception $_.Exception
+    }
+}
+
 Function Format-MsGraphData(){
     <#
     .SYNOPSIS
@@ -534,6 +616,12 @@ foreach($DCP in $DCPs){
             
         }
     }
+}
+$ADMXPolicies = Get-ADMXBasedConfigurationProfiles
+foreach($ADMXPolicy in $ADMXPolicies){
+    write-Log "Device Configuration (ADMX): $($ADMXPolicy.DisplayName)"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $ADMXPolicy.DisplayName
+    $ADMXPolicy.Settings | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
 }
 #endregion
 #region Device Management Scripts (PowerShell)
