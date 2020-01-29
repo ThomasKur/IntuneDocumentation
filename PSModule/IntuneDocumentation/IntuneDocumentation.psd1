@@ -99,10 +99,10 @@ PrivateData = @{
         Tags = 'Intune','Windows','Documentation','MEM','MSGraph'
 
         # A URL to the license for this module.
-        LicenseUri = 'https://github.com/ThomasKur/ModernWorkplaceClientCenter/blob/master/LICENSE'
+        LicenseUri = 'https://github.com/ThomasKur/IntuneDocumentation/blob/master/LICENSE'
 
         # A URL to the main website for this project.
-        ProjectUri = 'https://github.com/ThomasKur/ModernWorkplaceClientCenter'
+        ProjectUri = 'https://github.com/ThomasKur/IntuneDocumentation'
 
         # A URL to an icon representing this module.
         IconUri = 'https://raw.githubusercontent.com/ThomasKur/ModernWorkplaceClientCenter/master/Logo/MWCC-Logo-512.png'
