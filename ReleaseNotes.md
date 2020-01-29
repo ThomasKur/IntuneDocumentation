@@ -1,5 +1,12 @@
 # Release Notes
 
+## 2.0.0 - 29.01.2020 - Thomas Kurth
+
+- Migrated to PSModule
+- Published to PSGallery
+
+## Old History (Before PSModule)
+
 001: First Version
 002: SetRegistryKey Function now allows to set empty values
 003: Change CreateFolder Function to first create folder and then write the log. Otherwise whe function can fail, when the logfile folder doesn't exist.
@@ -25,5 +32,5 @@
         - Application COnfiguration
         - Added new Template functionality
 
-014: Thomas Kurth 
+014: Thomas Kurth
         - Document ADMX backed Profiles
