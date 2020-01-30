@@ -44,7 +44,7 @@ function Write-Log {
     $DefaultLogOutputMode  = "Console" # "Console-LogFile","Console-WindowsEvent","LogFile-WindowsEvent","Console","LogFile","WindowsEvent","All"
     $DefaultLogWindowsEventSource = "IntuneDocumentation"
     $DefaultLogWindowsEventLog = "CustomPS"
-    $LogFilePath = "$LogFilePathFolder\{0}_{2}.log" -f ("IntuneDocumentation"),(Get-Date -uformat %Y%m%d%H%M)
+    $LogFilePath = "$LogFilePathFolder\IntuneDocumentation_$(Get-Date -uformat %Y%m%d%H%M).log"
     $DateTimeString = Get-Date -Format "yyyy-MM-dd HH:mm:sszz"
     $Output = ($DateTimeString + "`t" + $Type.ToUpper() + "`t" + $Message)
     if($Exception){

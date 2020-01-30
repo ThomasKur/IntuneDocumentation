@@ -1,6 +1,6 @@
 # Intune Documentation
 
-Automatic Intune Documentation to simplify the life of admins and consultants.
+<img align="right" src="https://github.com/ThomasKur/IntuneDocumentation/raw/master/Logo/IntuneDocumentationLogo.png" width="300px" alt="Automatic Intune Documentation Logo">Automatic Intune Documentation to simplify the life of admins and consultants.
 
 This Script will document:
 
@@ -22,15 +22,14 @@ This Script will document:
 
 ## Usage
 
-Download the Template.docx and the Invoke-IntuneDocumentation.ps1 file to the same folder and execute the ps1 file with PowerShell.exe:
+Since version 2.0.0 the Automatic Intune Documentation script is available in th PowerShell Gallery and therefore its much simpler to install and use it. You can just use these two commands:
 
-``` powershell
+```powershell
 
-powershell.exe -executionpolicy bypass -file Invoke-IntuneDocumentation.ps1
+Install-Module IntuneDocumentation
+Invoke-IntuneDocumentation -FullDocumentationPath c:\temp\IntuneDoc.docx
 
 ```
-
-You will get a prompt to select the documentation save location.
 
 **Important:** Before using the Script the first time, you have to ensure, that you have installed the Microsoft.Graph.Intune and PSWord Module. To do that, you have to start PowerShell as an Adminstrator and install them:
 

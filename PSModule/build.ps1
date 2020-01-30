@@ -1,5 +1,6 @@
 ﻿$ModulePath = ".\PSModule\IntuneDocumentation"
-
+$Icon = "https://github.com/ThomasKur/IntuneDocumentation/raw/master/Logo/IntuneDocumentationLogo.png"
+$License = "https://github.com/ThomasKur/IntuneDocumentation/blob/master/LICENSE"
 #region UI 
 $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes","Description."
 $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No","Description."
@@ -51,7 +52,7 @@ switch ($result) {
             -FunctionsToExport $ExportableFunctions `
             -ReleaseNotes $ReleaseNote `
             -RequiredModules @("Microsoft.Graph.Intune","PSWord") `
-            -IconUri "https://raw.githubusercontent.com/ThomasKur/ModernWorkplaceClientCenter/master/Logo/MWCC-Logo-512.png" `
+            -IconUri $Icon `
             -ModuleVersion $SuggestedNewVersion
     }
     1{
@@ -60,7 +61,7 @@ switch ($result) {
             -FunctionsToExport $ExportableFunctions `
             -ReleaseNotes $ReleaseNote `
             -RequiredModules @("Microsoft.Graph.Intune","PSWord") `
-            -IconUri "https://raw.githubusercontent.com/ThomasKur/ModernWorkplaceClientCenter/master/Logo/MWCC-Logo-512.png" `
+            -IconUri $Icon `
             -ModuleVersion $CurrentVersion
     }
     2{
@@ -79,4 +80,4 @@ Test-ModuleManifest -Path "$ModulePath\IntuneDocumentation.psd1" -ErrorAction St
     }
 #endregion
 $PSGallerAPIKey = Read-Host "Insert PSGallery API Key"
-Publish-Module -Path $env:TEMP\IntuneDocumentation -NuGetApiKey $PSGallerAPIKey -Verbose
+Publish-Module -Path $env:TEMP\IntuneDocumentation -NuGetApiKey $PSGallerAPIKey -IconUri $Icon -LicenseUri $License -Verbose
