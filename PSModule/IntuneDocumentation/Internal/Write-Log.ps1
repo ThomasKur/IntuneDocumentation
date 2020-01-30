@@ -30,18 +30,14 @@ function Write-Log {
         [ValidateSet("Info","Debug","Warn","Error")]
         [String]
         $Type = "Debug"
-    ,
-        [Parameter(Mandatory=$false)]
-        [ValidateSet("Console-LogFile","Console-WindowsEvent","LogFile-WindowsEvent","Console","LogFile","WindowsEvent","All")]
-        [String]
-        $OutputMode = $DefaultLogOutputMode
+
     ,
         [Parameter(Mandatory=$false)]
         [Exception]
         $Exception
     )
     $LogFilePathFolder     = Join-Path -Path $Env:TEMP -ChildPath $ScriptName
-    $DefaultLogOutputMode  = "Console" # "Console-LogFile","Console-WindowsEvent","LogFile-WindowsEvent","Console","LogFile","WindowsEvent","All"
+    $OutputMode  = "Console" # "Console-LogFile","Console-WindowsEvent","LogFile-WindowsEvent","Console","LogFile","WindowsEvent","All"
     $DefaultLogWindowsEventSource = "IntuneDocumentation"
     $DefaultLogWindowsEventLog = "CustomPS"
     $LogFilePath = "$LogFilePathFolder\IntuneDocumentation_$(Get-Date -uformat %Y%m%d%H%M).log"

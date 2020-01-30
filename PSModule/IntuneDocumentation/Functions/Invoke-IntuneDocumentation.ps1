@@ -44,7 +44,6 @@ Function Invoke-IntuneDocumentation(){
     #region Authentication
     Connect-MSGraph
     #endregion
-    #endregion
     #region Main Script
     ########################################################
     #region Save Path
@@ -276,7 +275,14 @@ Function Invoke-IntuneDocumentation(){
 
     foreach($ESP in $EnrollmentStatusPage){
         write-Log "Enrollment Status Page Config: $($ESP.displayName)"
-        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $ESP.displayName
+        $ESPtype = $ESP.type
+        switch($ESPtype){
+            "win10EnrollmentCompletionPageConfiguration" { $ESPtype = "ESP" }
+            "deviceEnrollmentLimitConfiguration" { $ESPtype = "Enrollment Limit" }
+            "deviceEnrollmentPlatformRestrictionsConfiguration" { $ESPtype = "Platform Restrictions" }
+            "deviceEnrollmentwinHelloForBusinessConfiguration" { $ESPtype = "Windows Hello for Business" }
+        }
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "$($ESPtype) - $($ESP.displayName)"
         
         $ht2 = @{}
         $ESP.psobject.properties | ForEach-Object { 

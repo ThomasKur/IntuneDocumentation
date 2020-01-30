@@ -1,5 +1,13 @@
 # Release Notes
 
+## 2.0.11 - 30.01.202 - thomas Kurth
+
+- Improve Titles in the ESP Page Section
+
+## 2.0.1-10 - 30.01.2020 - Thomas Kurth
+
+- Various Bugfixing due to PSModule generation
+
 ## 2.0.0 - 29.01.2020 - Thomas Kurth
 
 - Migrated to PSModule
