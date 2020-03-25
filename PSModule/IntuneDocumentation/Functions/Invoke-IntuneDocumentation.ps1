@@ -97,22 +97,16 @@ Function Invoke-IntuneDocumentation(){
         $ht2 = @{}
         $MAM.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
         ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
-        $id = $MAM.id
-        $MAMA = Get-DeviceAppManagement_AndroidManagedAppProtections_Assignments -androidManagedAppProtectionId $id -androidManagedAppProtectionODataType microsoft.graph.androidManagedAppProtection
-        $MAMA = Get-DeviceAppManagement_IosManagedAppProtections_Assignments -iosManagedAppProtectionId $id -iosManagedAppProtectionODataType microsoft.graph.iosManagedAppProtection
-        if($MAMA){
-            write-Log "Getting MAM Policy assignment..."
-            Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
-            if($APPA.count -gt 1){
-                $Assignments = @()
-                foreach($group in $MAMA){
-                    $Assignments += (Get-AADGroup -groupid $group.target.groupId).displayName
-                }
-                $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12
-            } else {
-                (Get-AADGroup -groupid $MAMA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath -Size 12
-            }
+        if($MAM.'@odata.type' -eq "#microsoft.graph.iosManagedAppProtection"){
+            $MAMA = Get-DeviceAppManagement_IosManagedAppProtections_Assignments -iosManagedAppProtectionId $MAM.id -iosManagedAppProtectionODataType microsoft.graph.iosManagedAppProtection
         }
+        if($MAM.'@odata.type' -eq "#microsoft.graph.androidManagedAppProtection"){
+            $MAMA = Get-DeviceAppManagement_AndroidManagedAppProtections_Assignments -androidManagedAppProtectionId $MAM.id -androidManagedAppProtectionODataType microsoft.graph.androidManagedAppProtection 
+        }
+        if($MAM.'@odata.type' -eq "#microsoft.graph.mdmWindowsInformationProtectionPolicy"){
+            $MAMA = Microsoft.Graph.Intune\Get-DeviceAppManagement_WindowsInformationProtectionPolicies_Assignments -windowsInformationProtectionPolicyId $MAM.id -windowsInformationProtectionPolicyODataType microsoft.graph.windowsInformationProtectionPolicy
+        }
+        Invoke-PrintAssignmentDetails -Assignments $MAMA
     }
     #endregion
     #region Document App configuration policies
@@ -128,19 +122,7 @@ Function Invoke-IntuneDocumentation(){
         $id = $MAM.id
         
         $MAMA = Get-DeviceAppManagement_MobileAppConfigurations_Assignments -managedDeviceMobileAppConfigurationId $id
-        if($MAMA){
-            write-Log "Getting Mobile Application Configuration assignment..."
-            Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
-            if($APPA.count -gt 1){
-                $Assignments = @()
-                foreach($group in $MAMA){
-                    $Assignments += (Get-AADGroup -groupid $group.target.groupId).displayName
-                }
-                $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12
-            } else {
-                (Get-AADGroup -groupid $MAMA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath -Size 12
-            }
-        }
+        Invoke-PrintAssignmentDetails -Assignments $MAMA
     }
     #endregion
     #region Document Compliance Policies
@@ -154,41 +136,26 @@ Function Invoke-IntuneDocumentation(){
         ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
         $id = $DCP.id
         $DCPA = Get-IntuneDeviceCompliancePolicyAssignment -deviceCompliancePolicyId $id
-        if($DCPA){
-            write-Log "Getting Compliance Policy assignment..."
-            Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
-            if($DCPA.count -gt 1){
-                $Assignments = @()
-                foreach($group in $DCPA){
-                    $Assignments += (Get-AADGroup -groupid $group.target.groupId).displayName
-                }
-                $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12
-            } else {
-                (Get-AADGroup -groupid $DCPA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath -Size 12
-            }
-        }
+        Invoke-PrintAssignmentDetails -Assignments $DCPA
     }
     #endregion
     #region Document T&C
     write-Log "Terms and Conditions"
-    $GAndT = Get-IntuneTermsAndConditions
-    if($GAndT){
+    $GAndTs = Get-IntuneTermsAndConditions
+    if($GAndTs){
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Terms and Conditions"
-        $GAndT | ForEach-Object { $_ | Select-Object -Property id,createdDateTime,lastModifiedDateTime,displayName,title,version } | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
+        foreach($GAndT in $GAndTs){
+            Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $GAndT.displayName
+            $GAndT | Select-Object -Property id,createdDateTime,lastModifiedDateTime,displayName,title,version  | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
+            $DCPA = Get-DeviceManagement_TermsAndConditions_Assignments -termsAndConditionId $GAndT.id
+            Invoke-PrintAssignmentDetails -Assignments $DCPA
+        }
     }
     #endregion
-    #region Document EnrollmentRestrictions
-    Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Enrollment Restrictions"
-    $Restrictions = Get-IntuneDeviceEnrollmentConfiguration
-    foreach($restriction in $Restrictions){
-        $ht2 = @{}
-        $restriction.psobject.properties | ForEach-Object { if($_.Name -ne "@odata.type"){$ht2[(Format-MsGraphData $($_.Name))] = ((Format-MsGraphData "$($_.Value) "))} }
-        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
-    }
-    #endregion
+    
     #region Document Device Configurations
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Device Configuration"
-    $DCPs = Get-IntuneDeviceConfigurationPolicy
+    $DCPs = Get-ConfigurationProfileBeta
     foreach($DCP in $DCPs){
         write-Log "Device Compliance Policy: $($DCP.displayName)"
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $DCP.displayName
@@ -203,29 +170,7 @@ Function Invoke-IntuneDocumentation(){
         ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
         $id = $DCP.id
         $DCPA = Get-IntuneDeviceConfigurationPolicyAssignment -deviceConfigurationId $id
-        if($DCPA){
-            write-Log "Getting Compliance Policy assignment..."
-            Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
-            if($DCPA.count -gt 1){
-                $Assignments = @()
-                foreach($group in $DCPA){
-                    if($null -ne $group.target.groupId){
-                        $Assignments += (Get-AADGroup -groupid $group.target.groupId).displayName
-                    } else {
-                        $Assignments += "$(($group.target.'@odata.type' -replace "#microsoft.graph.",''))"
-                    }
-                    
-                }
-                $Assignments | Add-WordText -FilePath $FullDocumentationPath -Size 12
-            } else {
-                if($null -ne $DCPA.target.groupId){
-                    (Get-AADGroup -groupid $DCPA.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath  -Size 12
-                } else {
-                    "$(($DCPA.target.'@odata.type' -replace "#microsoft.graph.",''))" | Add-WordText -FilePath $FullDocumentationPath  -Size 12
-                }
-                
-            }
-        }
+        Invoke-PrintAssignmentDetails -Assignments $DCPA
     }
     $ADMXPolicies = Get-ADMXBasedConfigurationProfile
     foreach($ADMXPolicy in $ADMXPolicies){
@@ -266,21 +211,22 @@ Function Invoke-IntuneDocumentation(){
                 }
         }
         ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+    
     }
     #endregion
 
     #region Enrollment Status Page Configuration
-    Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Enrollment Status Pages"
+    Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Enrollment Configuration"
     $EnrollmentStatusPage = Get-EnrollmentStatusPage
 
     foreach($ESP in $EnrollmentStatusPage){
         write-Log "Enrollment Status Page Config: $($ESP.displayName)"
-        $ESPtype = $ESP.type
+        $ESPtype = $ESP.'@odata.type'
         switch($ESPtype){
-            "win10EnrollmentCompletionPageConfiguration" { $ESPtype = "ESP" }
-            "deviceEnrollmentLimitConfiguration" { $ESPtype = "Enrollment Limit" }
-            "deviceEnrollmentPlatformRestrictionsConfiguration" { $ESPtype = "Platform Restrictions" }
-            "deviceEnrollmentwinHelloForBusinessConfiguration" { $ESPtype = "Windows Hello for Business" }
+            "#microsoft.graph.windows10EnrollmentCompletionPageConfiguration" { $ESPtype = "ESP" }
+            "#microsoft.graph.deviceEnrollmentLimitConfiguration" { $ESPtype = "Enrollment Limit" }
+            "#microsoft.graph.deviceEnrollmentPlatformRestrictionsConfiguration" { $ESPtype = "Platform Restrictions" }
+            "#microsoft.graph.deviceEnrollmentWindowsHelloForBusinessConfiguration" { $ESPtype = "Windows Hello for Business" }
         }
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "$($ESPtype) - $($ESP.displayName)"
         
@@ -293,7 +239,8 @@ Function Invoke-IntuneDocumentation(){
                 }
         }
         ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
-    
+        $DCPA = Get-DeviceManagement_DeviceEnrollmentConfigurations_Assignments -deviceEnrollmentConfigurationId $ESP.id
+        Invoke-PrintAssignmentDetails -Assignments $DCPA
     }
     #endregion
 
@@ -366,7 +313,6 @@ Function Invoke-IntuneDocumentation(){
 
     #General Settings
     # On Prem Cond Access Get-IntuneConditionalAccessSetting
-    # MAM Settings
 
 
 
