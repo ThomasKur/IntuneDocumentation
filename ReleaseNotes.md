@@ -42,3 +42,7 @@
 
 014: Thomas Kurth
         - Document ADMX backed Profiles
+015: Thomas Kurth
+        - Bugfix: All ADMX settings are now correctly displayed
+        - Assignments of various elements like Scripts, ADMX, Enrollment Status Page and Windows Hello for Business are now documented
+        - Section "Enrollment Status Page" renamed to "Enrollment Configuration" because it contains also WHfB, Enrollment Restrictions, ESP, and Enrollment Limits. 
