@@ -104,9 +104,9 @@ Function Invoke-IntuneDocumentation(){
             $MAMA = Get-DeviceAppManagement_AndroidManagedAppProtections_Assignments -androidManagedAppProtectionId $MAM.id -androidManagedAppProtectionODataType microsoft.graph.androidManagedAppProtection 
         }
         if($MAM.'@odata.type' -eq "#microsoft.graph.mdmWindowsInformationProtectionPolicy"){
-            $MAMA = Microsoft.Graph.Intune\Get-DeviceAppManagement_WindowsInformationProtectionPolicies_Assignments -windowsInformationProtectionPolicyId $MAM.id -windowsInformationProtectionPolicyODataType microsoft.graph.windowsInformationProtectionPolicy
+            $MAMA = Get-DeviceAppManagement_WindowsInformationProtectionPolicies_Assignments -windowsInformationProtectionPolicyId $MAM.id -windowsInformationProtectionPolicyODataType microsoft.graph.windowsInformationProtectionPolicy
         }
-        Invoke-PrintAssignmentDetails -Assignments $MAMA
+        Invoke-PrintAssignmentDetail -Assignments $MAMA
     }
     #endregion
     #region Document App configuration policies
@@ -122,7 +122,7 @@ Function Invoke-IntuneDocumentation(){
         $id = $MAM.id
         
         $MAMA = Get-DeviceAppManagement_MobileAppConfigurations_Assignments -managedDeviceMobileAppConfigurationId $id
-        Invoke-PrintAssignmentDetails -Assignments $MAMA
+        Invoke-PrintAssignmentDetail -Assignments $MAMA
     }
     #endregion
     #region Document Compliance Policies
@@ -136,7 +136,7 @@ Function Invoke-IntuneDocumentation(){
         ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
         $id = $DCP.id
         $DCPA = Get-IntuneDeviceCompliancePolicyAssignment -deviceCompliancePolicyId $id
-        Invoke-PrintAssignmentDetails -Assignments $DCPA
+        Invoke-PrintAssignmentDetail -Assignments $DCPA
     }
     #endregion
     #region Document T&C
@@ -148,7 +148,7 @@ Function Invoke-IntuneDocumentation(){
             Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $GAndT.displayName
             $GAndT | Select-Object -Property id,createdDateTime,lastModifiedDateTime,displayName,title,version  | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
             $DCPA = Get-DeviceManagement_TermsAndConditions_Assignments -termsAndConditionId $GAndT.id
-            Invoke-PrintAssignmentDetails -Assignments $DCPA
+            Invoke-PrintAssignmentDetail -Assignments $DCPA
         }
     }
     #endregion
@@ -170,13 +170,16 @@ Function Invoke-IntuneDocumentation(){
         ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
         $id = $DCP.id
         $DCPA = Get-IntuneDeviceConfigurationPolicyAssignment -deviceConfigurationId $id
-        Invoke-PrintAssignmentDetails -Assignments $DCPA
+        Invoke-PrintAssignmentDetail -Assignments $DCPA
     }
     $ADMXPolicies = Get-ADMXBasedConfigurationProfile
     foreach($ADMXPolicy in $ADMXPolicies){
         write-Log "Device Configuration (ADMX): $($ADMXPolicy.DisplayName)"
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $ADMXPolicy.DisplayName
         $ADMXPolicy.Settings | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+
+        $DCPA = Get-ADMXBasedConfigurationProfile_Assignment -ADMXBasedConfigurationProfileId $ADMXPolicy.Id
+        Invoke-PrintAssignmentDetail -Assignments $DCPA
     }
     #endregion
     #region Device Management Scripts (PowerShell)
@@ -191,6 +194,8 @@ Function Invoke-IntuneDocumentation(){
             }
         }
         ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+        $DCPA = Get-DeviceManagementScript_Assignment -DeviceManagementScriptId $ht2.id
+        Invoke-PrintAssignmentDetail -Assignments $DCPA
         
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Script"
         $PSScript.scriptContent | Add-WordText -FilePath $FullDocumentationPath -Size 10 -Italic -FontFamily "Courier New"
@@ -215,7 +220,7 @@ Function Invoke-IntuneDocumentation(){
     }
     #endregion
 
-    #region Enrollment Status Page Configuration
+    #region Enrollment Configuration
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Enrollment Configuration"
     $EnrollmentStatusPage = Get-EnrollmentStatusPage
 
@@ -239,8 +244,8 @@ Function Invoke-IntuneDocumentation(){
                 }
         }
         ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
-        $DCPA = Get-DeviceManagement_DeviceEnrollmentConfigurations_Assignments -deviceEnrollmentConfigurationId $ESP.id
-        Invoke-PrintAssignmentDetails -Assignments $DCPA
+        $DCPA = Get-DeviceManagement_DeviceEnrollmentConfigurations_Assignment -deviceEnrollmentConfigurationId $ESP.id
+        Invoke-PrintAssignmentDetail -Assignments $DCPA
     }
     #endregion
 
@@ -309,12 +314,6 @@ Function Invoke-IntuneDocumentation(){
     ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
 
     #endregion
-
-
-    #General Settings
-    # On Prem Cond Access Get-IntuneConditionalAccessSetting
-
-
 
     #region Partner Configuration
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Partner Configuration"

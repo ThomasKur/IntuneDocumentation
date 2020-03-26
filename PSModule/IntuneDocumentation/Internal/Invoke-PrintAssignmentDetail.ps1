@@ -1,14 +1,14 @@
-Function Invoke-PrintAssignmentDetails(){
+Function Invoke-PrintAssignmentDetail(){
     <#
         .SYNOPSIS
         This function is used to print the assignment information to the word file.
         .DESCRIPTION
         This function is used to print the assignment information to the word file. It also gets group names.
         .EXAMPLE
-        Invoke-PrintAssignmentDetails -Assignments $assignment
+        Invoke-PrintAssignmentDetail -Assignments $assignment
         Prints the information from the Assignents Array
         .NOTES
-        NAME: Invoke-PrintAssignmentDetails
+        NAME: Invoke-PrintAssignmentDetail
         #>
         param(
             $Assignments
