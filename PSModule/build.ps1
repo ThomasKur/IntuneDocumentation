@@ -73,7 +73,7 @@ Test-ModuleManifest -Path "$ModulePath\IntuneDocumentation.psd1" -ErrorAction St
 
 #region Sign Scripts
     Copy-Item -Path $ModulePath -Destination $env:TEMP -Recurse -Force
-    $cert = get-item Cert:\CurrentUser\My\* -CodeSigningCert
+    $cert = get-item Cert:\CurrentUser\My\* -CodeSigningCert | Out-GridView -OutputMode Single
     $PSFiles = Get-ChildItem -Path $env:TEMP\IntuneDocumentation -Recurse | Where-Object {$_.Extension -eq ".ps1" -or $_.Extension -eq ".psm1"}
     foreach($PSFile in $PSFiles){
         Set-AuthenticodeSignature -Certificate $cert -TimestampServer http://timestamp.verisign.com/scripts/timstamp.dll -FilePath ($PSFile.FullName) -Verbose
