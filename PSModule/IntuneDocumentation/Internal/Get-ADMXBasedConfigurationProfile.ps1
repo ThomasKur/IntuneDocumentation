@@ -11,25 +11,29 @@ Function Get-ADMXBasedConfigurationProfile(){
     NAME: Get-ADMXBasedConfigurationProfile
     #>
     try {
-        Update-MSGraphEnvironment -SchemaVersion 'beta'
-        Connect-MSGraph
-        $Policies = Invoke-MSGraphRequest -HttpMethod GET -Url "/deviceManagement/groupPolicyConfigurations"
+
+        $Policies = Invoke-MSGraphRequest -HttpMethod GET -Url "https://graph.microsoft.com/Beta/deviceManagement/groupPolicyConfigurations"
         $return = @()
         foreach($Policy in $Policies.value){
             $return2 = @()
-            $values = Invoke-MSGraphRequest -HttpMethod GET -Url "/deviceManagement/groupPolicyConfigurations/$($Policy.Id)/definitionValues"
+            $values = Invoke-MSGraphRequest -HttpMethod GET -Url "https://graph.microsoft.com/Beta/deviceManagement/groupPolicyConfigurations/$($Policy.Id)/definitionValues"
             foreach($value in $values.value){
                 try{
-                    $definition = (Invoke-MSGraphRequest -HttpMethod GET -Url "/deviceManagement/groupPolicyConfigurations/$($Policy.Id)/definitionValues/$($value.id)/definition")
-                    $res = Invoke-MSGraphRequest -HttpMethod GET -Url "/deviceManagement/groupPolicyConfigurations/$($Policy.Id)/definitionValues/$($value.id)/presentationValues"
+                    $definition = (Invoke-MSGraphRequest -HttpMethod GET -Url "https://graph.microsoft.com/Beta/deviceManagement/groupPolicyConfigurations/$($Policy.Id)/definitionValues/$($value.id)/definition")
+                    $res = Invoke-MSGraphRequest -HttpMethod GET -Url "https://graph.microsoft.com/Beta/deviceManagement/groupPolicyConfigurations/$($Policy.Id)/definitionValues/$($value.id)/presentationValues"
+                    if($null -ne $res.value.Value){
+                        $AdditionalConfig = if($res.value.value.GetType().baseType.Name -eq "Array"){ $res.value.value -join ", "  } else { $res.value.value }
+                    } else {
+                        $AdditionalConfig = ""
+                    }
                     $return2 += [PSCustomObject]@{ 
                         DisplayName = $definition.displayName
                         #ExplainText = $definition.explainText
                         Scope = $definition.classType
                         Path = $definition.categoryPath
                         SupportedOn = $definition.supportedOn
-                        Enabled = $value.enabled
-                        Value = if($res.value.value.GetType().baseType.Name -eq "Array"){ $res.value.value -join ", "  }else { $res.value.value }
+                        State = if($value.enabled -eq $true){"Enabled"} else {"Disabled"}
+                        Value = $AdditionalConfig
                     }
                 } catch {
                     Write-Log -Message "Error reading ADMX setting" -Type Warn -Exception $_.Exception
@@ -37,11 +41,10 @@ Function Get-ADMXBasedConfigurationProfile(){
             }
             $return += [PSCustomObject]@{ 
                 DisplayName = $Policy.displayName
+                Id = $Policy.id
                 Settings = $return2
             }
         }
-        Update-MSGraphEnvironment -SchemaVersion v1.0
-        Connect-MSGraph
         return $return
     } catch {     
         Write-Log "Response content:`n$responseBody" -Type Error
