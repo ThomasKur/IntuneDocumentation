@@ -46,3 +46,11 @@
         - Bugfix: All ADMX settings are now correctly displayed
         - Assignments of various elements like Scripts, ADMX, Enrollment Status Page and Windows Hello for Business are now documented
         - Section "Enrollment Status Page" renamed to "Enrollment Configuration" because it contains also WHfB, Enrollment Restrictions, ESP, and Enrollment Limits. 
+        - Configuration Profiles are now loaded from the Beta Graph API. Therefore, much more types are returned. For example the Domain Join configuration is now returned.
+
+016: Thomas Kurth
+        - Deactivated Verbose Loging of Intune PS Module
+        - Bugfix by David Jacobs 
+        - Hide Section Titles when there is no content
+        - Start adding translations to have the same property names like in the Intune UI instead of just the API names
+        
