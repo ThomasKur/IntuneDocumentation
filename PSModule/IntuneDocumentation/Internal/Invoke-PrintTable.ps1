@@ -28,7 +28,6 @@ Function Invoke-PrintTable(){
 
     foreach($p in $Properties) { 
         if([String]::IsNullOrWhiteSpace($translation."$($p.Name)")){
-            $Name = Format-MsGraphData $($p.Name)
             $TranslationValue = switch($p.Name){
                 "displayName" { "Displayname" }
                 "lastModifiedDateTime" { "Modified at" }
@@ -59,7 +58,7 @@ Function Invoke-PrintTable(){
                     DataType = $p.TypeNameOfValue
                 }
             }
-
+            $Name = $TranslationValue
             $translation | Add-Member Noteproperty -Name $p.Name -Value $TranslationObject -Force 
             $translation | ConvertTo-Json | Out-File -FilePath $TranslationFile -Force
         } else {   
