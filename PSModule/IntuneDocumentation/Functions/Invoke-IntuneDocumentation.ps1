@@ -5,6 +5,18 @@ Function Invoke-IntuneDocumentation(){
     NOTE: This no longer does Conditional Access
     The Script is using the PSWord and Microsoft.Graph.Intune Module. Therefore you have to install them first.
 
+    .PARAMETER FullDocumentationPath
+        Path including filename where the documentation should be created. The filename has to end with .docx.
+        Note:
+        If there is already a file present, the documentation witt be added at the end of the existing document.
+
+    .PARAMETER UseTranslationBeta
+        When using this parameter the API names will be translated to the labels used in the Intune Portal. 
+        Note:
+        These Translations need to be created manually, only a few are translated yet. If you are willing 
+        to support this project. You can do this by translating the json files which are mentioned to you when 
+        you generate the documentation in your tenant. 
+
     .EXAMPLE
     Invoke-IntuneDocumentation -FullDocumentationPath c:\temp\IntuneDoc.docx
 
@@ -30,13 +42,20 @@ Function Invoke-IntuneDocumentation(){
             }
             return $true 
         })]
-        [System.IO.FileInfo]$FullDocumentationPath = ".\IntuneDocumentation.docx"
+        [System.IO.FileInfo]$FullDocumentationPath = ".\IntuneDocumentation.docx",
+        [switch]$UseTranslationBeta
+
     )
     ## Manual Variable Definition
     ########################################################
     #$DebugPreference = "Continue"
     $ScriptName = "DocumentIntune"
-    
+    $Global:NewTranslationFiles = @()
+    if($UseTranslationBeta){
+        $Global:UseTranslation = $true
+    } else {
+        $Global:UseTranslation = $false
+    }
 
     #region Initialization
     ########################################################
@@ -290,6 +309,15 @@ Function Invoke-IntuneDocumentation(){
     #region Finishing
     ########################################################
     Write-Log "Press Ctrl + A and then F9 to Update the table of contents and other dynamic fields in the Word document."
+    if($Global:NewTranslationFiles.Count -gt 0 -and $Global:UseTranslation){
+        Write-Log "You used the option to translate API properties. Some of the configurations of your tenant could not be translated because translations are missing." -Type Warn
+        foreach($file in $Global:NewTranslationFiles){
+            Write-Log " - $file" -Type Warn
+        }
+        Write-Log "You can support the project by translating and submitting the files as issue on the project page. Then it will be included for the future." -Type Warn
+        
+    }
+    
     Write-Log "End Script $Scriptname"
     #endregion
 }

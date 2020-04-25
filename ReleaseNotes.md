@@ -53,4 +53,7 @@
         - Bugfix by David Jacobs 
         - Hide Section Titles when there is no content
         - Start adding translations to have the same property names like in the Intune UI instead of just the API names
-        
+
+017: Thomas Kurth
+        - Adding additional translation
+        - Make translations Optional -UseTranslationBeta
