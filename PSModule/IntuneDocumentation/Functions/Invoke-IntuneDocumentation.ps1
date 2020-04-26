@@ -311,8 +311,8 @@ Function Invoke-IntuneDocumentation(){
     Write-Log "Press Ctrl + A and then F9 to Update the table of contents and other dynamic fields in the Word document."
     if($Global:NewTranslationFiles.Count -gt 0 -and $Global:UseTranslation){
         Write-Log "You used the option to translate API properties. Some of the configurations of your tenant could not be translated because translations are missing." -Type Warn
-        foreach($file in $Global:NewTranslationFiles){
-            Write-Log " - $file" -Type Warn
+        foreach($file in ($Global:NewTranslationFiles | Select-Object -Unique)){
+            Write-Log " - $($file.Replace('Internal\..\',''))" -Type Warn
         }
         Write-Log "You can support the project by translating and submitting the files as issue on the project page. Then it will be included for the future." -Type Warn
         
