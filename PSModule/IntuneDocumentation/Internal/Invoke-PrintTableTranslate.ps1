@@ -44,7 +44,7 @@ Function Invoke-PrintTableTranslate(){
             if($p.TypeNameOfValue -eq "System.Boolean"){
                 $TranslationObject = New-Object PSObject -Property @{
                     Name = $TranslationValue
-                    Section = " "
+                    Section = (if([String]::IsNullOrWhiteSpace($TranslationValue)){" "} else {"Metadata"})
                     DataType = $p.TypeNameOfValue
                     ValueTrue = "Block"
                     ValueFalse = "Not Configured"
@@ -52,16 +52,22 @@ Function Invoke-PrintTableTranslate(){
             } else {
                 $TranslationObject = New-Object PSObject -Property @{
                     Name = $TranslationValue
-                    Section = " "
+                    Section = (if([String]::IsNullOrWhiteSpace($TranslationValue)){" "} else {"Metadata"})
                     DataType = $p.TypeNameOfValue
                 }
             }
-            $Name = $TranslationValue
+            #Only use translated value if not empty
+            if([String]::IsNullOrWhiteSpace($TranslationValue)){
+                $Name = $p.Name
+            } else {
+                $Name = $TranslationValue
+            }
             $translation | Add-Member Noteproperty -Name $p.Name -Value $TranslationObject -Force 
             $translation | ConvertTo-Json | Out-File -FilePath $TranslationFile -Force
             #Variable set for user information in main function
             $Global:NewTranslationFiles += $TranslationFile
-        } else {   
+        } else { 
+            #Only use translated value if not empty  
             if([String]::IsNullOrWhiteSpace($translation."$($p.Name)".Name)){
                 $Name = $p.Name
             } else {
