@@ -315,7 +315,7 @@ Function Invoke-IntuneDocumentation(){
             Write-Log " - $($file.Replace('Internal\..\',''))" -Type Warn
         }
         Write-Log "You can support the project by translating and submitting the files as issue on the project page. Then it will be included for the future." -Type Warn
-        
+        Write-Log "Follow the guide here https://github.com/ThomasKur/IntuneDocumentation/blob/master/AddTranslation.md" -Type Warn
     }
     
     Write-Log "End Script $Scriptname"
