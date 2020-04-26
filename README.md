@@ -41,13 +41,13 @@ Install-Module PSWord
 ```
 
 ## Additional Options
- 
+
 ### UseTranslationBeta
+
 When using this parameter the API names will be translated to the labels used in the Intune Portal. 
 Note:
 These Translations need to be created manually, only a few are translated yet. If you are willing 
-to support this project. You can do this by translating the json files which are mentioned to you when 
-you generate the documentation in your tenant. 
+to support this project. You can do this by [translating the json files](https://github.com/ThomasKur/IntuneDocumentation/blob/master/AddTranslation.md) which are mentioned to you when you generate the documentation in your tenant.
 
 ```powershell
 
