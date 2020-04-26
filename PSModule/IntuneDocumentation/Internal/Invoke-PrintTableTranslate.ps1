@@ -41,10 +41,15 @@ Function Invoke-PrintTableTranslate(){
                 "id" {'ID'}
                 default { '' }   
             }
+            if([String]::IsNullOrWhiteSpace($TranslationValue)){
+                $Section = " "
+            } else {
+                $Section = "Metadata"
+            }
             if($p.TypeNameOfValue -eq "System.Boolean"){
                 $TranslationObject = New-Object PSObject -Property @{
                     Name = $TranslationValue
-                    Section = (if([String]::IsNullOrWhiteSpace($TranslationValue)){" "} else {"Metadata"})
+                    Section = $Section
                     DataType = $p.TypeNameOfValue
                     ValueTrue = "Block"
                     ValueFalse = "Not Configured"
@@ -52,7 +57,7 @@ Function Invoke-PrintTableTranslate(){
             } else {
                 $TranslationObject = New-Object PSObject -Property @{
                     Name = $TranslationValue
-                    Section = (if([String]::IsNullOrWhiteSpace($TranslationValue)){" "} else {"Metadata"})
+                    Section = $Section
                     DataType = $p.TypeNameOfValue
                 }
             }
