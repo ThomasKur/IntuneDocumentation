@@ -50,11 +50,11 @@ Function Invoke-IntuneDocumentation(){
     ########################################################
     #$DebugPreference = "Continue"
     $ScriptName = "DocumentIntune"
-    $Global:NewTranslationFiles = @()
+    $Script:NewTranslationFiles = @()
     if($UseTranslationBeta){
-        $Global:UseTranslation = $true
+        $Script:UseTranslation = $true
     } else {
-        $Global:UseTranslation = $false
+        $Script:UseTranslation = $false
     }
 
     #region Initialization
@@ -309,9 +309,9 @@ Function Invoke-IntuneDocumentation(){
     #region Finishing
     ########################################################
     Write-Log "Press Ctrl + A and then F9 to Update the table of contents and other dynamic fields in the Word document."
-    if($Global:NewTranslationFiles.Count -gt 0 -and $Global:UseTranslation){
+    if($Script:NewTranslationFiles.Count -gt 0 -and $Script:UseTranslation){
         Write-Log "You used the option to translate API properties. Some of the configurations of your tenant could not be translated because translations are missing." -Type Warn
-        foreach($file in ($Global:NewTranslationFiles | Select-Object -Unique)){
+        foreach($file in ($Script:NewTranslationFiles | Select-Object -Unique)){
             Write-Log " - $($file.Replace('Internal\..\',''))" -Type Warn
         }
         Write-Log "You can support the project by translating and submitting the files as issue on the project page. Then it will be included for the future." -Type Warn

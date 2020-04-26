@@ -70,7 +70,7 @@ Function Invoke-PrintTableTranslate(){
             $translation | Add-Member Noteproperty -Name $p.Name -Value $TranslationObject -Force 
             $translation | ConvertTo-Json | Out-File -FilePath $TranslationFile -Force
             #Variable set for user information in main function
-            $Global:NewTranslationFiles += $TranslationFile
+            $Script:NewTranslationFiles += $TranslationFile
         } else { 
             #Only use translated value if not empty  
             if([String]::IsNullOrWhiteSpace($translation."$($p.Name)".Name)){
