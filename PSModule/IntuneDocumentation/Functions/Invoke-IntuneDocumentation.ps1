@@ -85,7 +85,7 @@ Function Invoke-IntuneDocumentation(){
     #endregion
     #region Document Apps
     $Intune_Apps = @()
-    Get-IntuneMobileApp | ForEach-Object {
+    Get-MobileAppsBeta | ForEach-Object {
         $App_Assignment = Get-IntuneMobileAppAssignment -mobileAppId $_.id
         if($App_Assignment){
             $Intune_App = New-Object -Type PSObject
