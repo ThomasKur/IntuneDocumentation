@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.0.14 - 17.05.2020 - Thomas Kurth
+
+- Using Beta Graph for retieving Apps. This returns also win32 Lob and Office Suite Apps.
+
 ## 2.0.13 - 26.04.2020 - Thomas Kurth
 
 - Deactivated Verbose Loging of Intune PS Module
