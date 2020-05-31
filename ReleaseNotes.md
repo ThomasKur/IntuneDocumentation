@@ -17,7 +17,7 @@
 
 - Bugfix: All ADMX settings are now correctly displayed
 - Assignments of various elements like Scripts, ADMX, Enrollment Status Page and Windows Hello for Business are now documented
-- Section "Enrollment Status Page" renamed to "Enrollment Configuration" because it contains also WHfB, Enrollment Restrictions, ESP, and Enrollment Limits. 
+- Section "Enrollment Status Page" renamed to "Enrollment Configuration" because it contains also WHfB, Enrollment Restrictions, ESP, and Enrollment Limits.
 - Configuration Profiles are now loaded from the Beta Graph API. Therefore, much more types are returned. For example the Domain Join configuration is now returned.
 
 ## 2.0.11 - 30.01.2020 - Thomas Kurth
@@ -39,8 +39,8 @@
 002: SetRegistryKey Function now allows to set empty values
 003: Change CreateFolder Function to first create folder and then write the log. Otherwise whe function can fail, when the logfile folder doesn't exist.
 004: Improved Log Action
-005: Version is now taken from Variable, Log can be written to Windows Event, 
-        ScriptName does no longer contain Script FileName, which is now available in $CurrentFileName 
+005: Version is now taken from Variable, Log can be written to Windows Event,
+        ScriptName does no longer contain Script FileName, which is now available in $CurrentFileName
 006: ScriptPath not allways read correctly. Sometimes it was a relative path.
 007: Better formating and Option to specify the Save As location
 008: Jos Lieben: Fixed a few things and added Conditional Access Policies
