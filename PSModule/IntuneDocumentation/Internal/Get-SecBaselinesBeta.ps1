@@ -24,7 +24,7 @@ Function Get-SecBaselinesBeta(){
                 # $settingDef = Invoke-MSGraphRequest -Url "https://graph.microsoft.com/beta/deviceManagement/settingDefinitions/$($setting.id)" -ErrorAction SilentlyContinue
                 # $displayName = $settingDef.Value.displayName 
                 # if($null -eq $displayName){
-                $displayName = $setting.definitionId -replace "deviceConfiguration--windows10GeneralConfiguration_","" -replace "admx--microsoftedge_",""
+                $displayName = $setting.definitionId -replace "deviceConfiguration--","" -replace "admx--",""  -replace "_"," "
                 # }
                 if($null -eq $setting.value){
                     $v = ""
