@@ -19,6 +19,8 @@ This Script will document:
 - Application Configuration
 - PowerShell Scripts
 - ADMX backed Configuration Profiles
+- Security Baseline
+- Custom Roles
 
 ## Usage
 

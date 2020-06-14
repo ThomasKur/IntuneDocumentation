@@ -24,7 +24,7 @@ Function Invoke-IntuneDocumentation(){
     Author: Thomas Kurth/baseVISION
     Co-Author: jflieben
     Co-Author: Robin Dadswell
-    Date:   28.07.2019
+    Date:   14.6.2020
 
     History
         See Release Notes in Github.
@@ -166,6 +166,19 @@ Function Invoke-IntuneDocumentation(){
         }
     }
     #endregion
+    #region Security Baselines
+    $SBs = Get-SecBaselinesBeta
+    if($null -ne $SBs){
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Security Baselines"
+        foreach($SB in $SBs){
+            write-Log "Security Baselines Policy: $($SB.displayName)"
+            Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $SB.displayName
+            $SB.Settings | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+            
+            Invoke-PrintAssignmentDetail -Assignments $SB.Assignments
+        }
+    }
+    #endregion
     #region Document T&C
     write-Log "Terms and Conditions"
     $GAndTs = Get-IntuneTermsAndConditions
@@ -251,6 +264,18 @@ Function Invoke-IntuneDocumentation(){
             Invoke-PrintTable -Properties $ESP.psobject.properties -TypeName $ESP.'@odata.type'
             $DCPA = Get-DeviceManagement_DeviceEnrollmentConfigurations_Assignments -deviceEnrollmentConfigurationId $ESP.id
             Invoke-PrintAssignmentDetail -Assignments $DCPA
+        }
+    }
+    #endregion
+
+    #region Custom Roles
+    $CustomRoles = Get-DeviceManagement_RoleDefinitions | Where-Object { $_.isBuiltin -eq $false }
+    if($null -ne $CustomRoles){
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Custom Roles"
+        foreach($CustomRole in $CustomRoles){
+            write-Log "Custom role: $($CustomRole.displayName)"
+            Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $CustomRole.displayName
+            $CustomRole.rolePermissions.resourceActions.allowedResourceActions | Add-WordText -FilePath $FullDocumentationPath -Size 11
         }
     }
     #endregion

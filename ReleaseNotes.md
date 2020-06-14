@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2.0.15 - 15.06.2020 - Thomas Kurth
+
+- Add documentation for Security Baseline.
+- Add documentation for Custom Roles.
+
 ## 2.0.14 - 17.05.2020 - Thomas Kurth
 
 - Using Beta Graph for retieving Apps. This returns also win32 Lob and Office Suite Apps.
