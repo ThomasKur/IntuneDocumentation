@@ -10,9 +10,7 @@ Function Invoke-PrintTableNormal(){
     #>
     param(
         [Parameter(Mandatory=$true)]
-        $Properties,
-        [Parameter(Mandatory=$true)]
-        [String]$TypeName
+        $Properties
     )
     $MaxStringLengthSettings = 350
     $ht = @{}

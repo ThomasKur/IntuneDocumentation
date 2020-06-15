@@ -19,6 +19,6 @@ Function Invoke-PrintTable(){
     if($Script:UseTranslation){
         Invoke-PrintTableTranslate  -Properties $Properties -TypeName $TypeName
     } else {
-        Invoke-PrintTableNormal -Properties $Properties -TypeName $TypeName
+        Invoke-PrintTableNormal -Properties $Properties 
     }
 }
