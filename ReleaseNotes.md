@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.0.16 - 21.07.2020 - Thomas Kurth
+
+- Added possibility to run the documentation [in background](README.md#use-script-silently) with a custom App Registration
+
 ## 2.0.15 - 15.06.2020 - Thomas Kurth
 
 - Add documentation for Security Baseline.

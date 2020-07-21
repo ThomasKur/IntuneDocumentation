@@ -5,6 +5,8 @@ Function Invoke-IntuneDocumentation(){
     NOTE: This no longer does Conditional Access
     The Script is using the PSWord and Microsoft.Graph.Intune Module. Therefore you have to install them first.
 
+
+
     .PARAMETER FullDocumentationPath
         Path including filename where the documentation should be created. The filename has to end with .docx.
         Note:
@@ -17,8 +19,22 @@ Function Invoke-IntuneDocumentation(){
         to support this project. You can do this by translating the json files which are mentioned to you when 
         you generate the documentation in your tenant. 
 
-    .EXAMPLE
+    .PARAMETER ClientSecret
+        If the client secret is set, app-only authentication will be performed using the client ID specified by 
+        the AppId environment parameter.
+
+    .PARAMETER ClientId
+        The client id of the application registration with the required permissions.
+
+    .PARAMETER Tenant
+        Name of your tenant in form of "kurcontoso.onmicrosoft.com" or the TenantId
+    
+
+    .EXAMPLE Interactive
     Invoke-IntuneDocumentation -FullDocumentationPath c:\temp\IntuneDoc.docx
+
+    .EXAMPLE Non interactive
+    Invoke-IntuneDocumentation -FullDocumentationPath c:\temp\IntuneDoc.docx  -ClientId d5cf6364-82f7-4024-9ac1-73a9fd2a6ec3 -ClientSecret S03AESdMlhLQIPYYw/cYtLkGkQS0H49jXh02AS6Ek0U= -Tenant d873f16a-73a2-4ccf-9d36-67b8243ab99a
 
     .NOTES
     Author: Thomas Kurth/baseVISION
@@ -29,10 +45,6 @@ Function Invoke-IntuneDocumentation(){
     History
         See Release Notes in Github.
 
-    ExitCodes:
-        99001: Could not Write to LogFile
-        99002: Could not Write to Windows Log
-        99003: Could not Set ExitMessageRegistry
     #>
     [CmdletBinding()]
     Param(
@@ -42,8 +54,22 @@ Function Invoke-IntuneDocumentation(){
             }
             return $true 
         })]
+        [Parameter(ParameterSetName = "NonInteractive")]
+        [Parameter(ParameterSetName = "Default")]
         [System.IO.FileInfo]$FullDocumentationPath = ".\IntuneDocumentation.docx",
-        [switch]$UseTranslationBeta
+
+        [Parameter(ParameterSetName = "Default")]
+        [Parameter(ParameterSetName = "NonInteractive")]
+        [switch]$UseTranslationBeta,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "NonInteractive")]
+        [String]$ClientId,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "NonInteractive")]
+        [String]$ClientSecret,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "NonInteractive")]
+        [String]$Tenant
 
     )
     ## Manual Variable Definition
@@ -61,7 +87,14 @@ Function Invoke-IntuneDocumentation(){
     ########################################################
     Write-Log "Start Script $Scriptname"
     #region Authentication
-    Connect-MSGraph
+    if($PsCmdlet.ParameterSetName -eq "NonInteractive"){
+        $authority = "https://login.windows.net/$Tenant"
+        Update-MSGraphEnvironment -AppId $ClientId -Quiet
+        Update-MSGraphEnvironment -AuthUrl $authority -Quiet
+        Connect-MSGraph -ClientSecret $ClientSecret -Quiet
+    } else { 
+        Connect-MSGraph
+    }
     #endregion
     #region Main Script
     ########################################################

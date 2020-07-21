@@ -57,6 +57,61 @@ Invoke-IntuneDocumentation -FullDocumentationPath c:\temp\IntuneDoc.docx -UseTra
 
 ```
 
+### Use script silently
+
+In the past I got requests that users would like to execute the Intune Documentation script silently. I have now extended the script by two new option and a new functions which can automatically create the App Registration in Azure AD for you. 
+
+#### Automatically Create App Registration
+
+Your account requires Global Admin privileges to execute these commands and you need to have the AzureAD Module installed.
+
+```powershell
+
+$p = New-IntuneDocumentationAppRegistration
+$p | fl
+
+```
+
+The following result will be displayed and can then be used. Safe the ClientSecret in your password vault.
+
+```powershell
+
+ClientID               : d5cf6364-82f7-4024-9ac1-73a9fd2a6ec3
+ClientSecret           : S03AESdMlhLQIPYYw/cYtLkGkQS0H49jXh02AS6Ek0U=
+ClientSecretExpiration : 21.07.2025 21:39:02
+TenantId               : d873f16a-73a2-4ccf-9d36-67b8243ab99a
+
+```
+
+#### Manually Create App Registration
+
+You can follow the manual of Michael Niehaus https://oofhours.com/2019/11/29/app-based-authentication-with-intune/
+
+But select also the following permission scopes:
+
+- 'Policy.Read.All'
+- 'Directory.Read.All'
+- 'DeviceManagementServiceConfig.Read.All'
+- 'DeviceManagementRBAC.Read.All'
+- 'DeviceManagementManagedDevices.Read.All'
+- 'DeviceManagementConfiguration.Read.All'
+- 'DeviceManagementApps.Read.All'
+- 'Device.Read.All'
+
+#### Generate Documentation without user interaction
+
+You can now call the Intune Documentation with the new parameters:
+
+```powershell
+
+Invoke-IntuneDocumentation `
+    -FullDocumentationPath c:\temp\IntuneDoc.docx `
+    -ClientId d5cf6364-82f7-4024-9ac1-73a9fd2a6ec3 `
+    -ClientSecret S03AESdMlhLQIPYYw/cYtLkGkQS0H49jXh02AS6Ek0U= `
+    -Tenant d873f16a-73a2-4ccf-9d36-67b8243ab99a
+
+```
+
 ## Issues / Feedback
 
 For any issues or feedback related to this module, please register for GitHub, and post your inquiry to this project's issue tracker.
