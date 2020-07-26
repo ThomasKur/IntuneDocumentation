@@ -153,13 +153,13 @@ Function Invoke-IntuneDocumentation(){
             $MAM.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
             ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
             if($MAM.'@odata.type' -eq "#microsoft.graph.iosManagedAppProtection"){
-                $MAMA = Get-DeviceAppManagement_IosManagedAppProtections_Assignments -iosManagedAppProtectionId $MAM.id -iosManagedAppProtectionODataType microsoft.graph.iosManagedAppProtection
+                $MAMA = Get-MAM_iOS_Assignment -policyId $MAM.id
             }
             if($MAM.'@odata.type' -eq "#microsoft.graph.androidManagedAppProtection"){
-                $MAMA = Get-DeviceAppManagement_AndroidManagedAppProtections_Assignments -androidManagedAppProtectionId $MAM.id -androidManagedAppProtectionODataType microsoft.graph.androidManagedAppProtection 
+                $MAMA = Get-MAM_Android_Assignment -policyId $MAM.id
             }
             if($MAM.'@odata.type' -eq "#microsoft.graph.mdmWindowsInformationProtectionPolicy"){
-                $MAMA = Get-DeviceAppManagement_WindowsInformationProtectionPolicies_Assignments -windowsInformationProtectionPolicyId $MAM.id -windowsInformationProtectionPolicyODataType microsoft.graph.windowsInformationProtectionPolicy
+                $MAMA = Get-MAM_Windows_Assignment -policyId $MAM.id
             }
             Invoke-PrintAssignmentDetail -Assignments $MAMA
         }
