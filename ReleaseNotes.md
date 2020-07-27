@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.0.17 - 26.07.2020 - Thomas Kurth
+
+- Bugfix to include MAM assignments
+
 ## 2.0.16 - 21.07.2020 - Thomas Kurth
 
 - Added possibility to run the documentation [in background](README.md#use-script-silently) with a custom App Registration

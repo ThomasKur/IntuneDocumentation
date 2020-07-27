@@ -11,7 +11,7 @@ Function Get-ConditionalAccess(){
     NAME: Get-ConditionalAccess
     #>
     try {
-        $uri = "https://graph.microsoft.com/Beta/conditionalAccess/policies"
+        $uri = "https://graph.microsoft.com/beta/identity/conditionalAccess/policies"
         (Invoke-MSGraphRequest -Url $uri -HttpMethod GET).Value
     } catch {
         $ex = $_.Exception
