@@ -22,6 +22,8 @@ Function New-IntuneDocumentationAppRegistration(){
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact='Medium')]
     Param(
+        [int]
+        $TokenLifetimeDays = 365
     )
     ## Manual Variable Definition
     ########################################################
@@ -41,12 +43,23 @@ Function New-IntuneDocumentationAppRegistration(){
     }
 
     #region Authentication
-    Connect-AzureAD
+    Connect-AzureAD | Out-Null
     #endregion
     #region Main Script
     ########################################################
     
     $displayName = "WPNinjas.eu Automatic Documentation"
+    $appPermissionsRequired = @('Policy.Read.All',
+                                    'Directory.Read.All',
+                                    'DeviceManagementServiceConfig.Read.All',
+                                    'DeviceManagementRBAC.Read.All',
+                                    'DeviceManagementManagedDevices.Read.All',
+                                    'DeviceManagementConfiguration.Read.All',
+                                    'DeviceManagementApps.Read.All',
+                                    'Device.Read.All',
+                                    'Agreement.Read.All',
+                                    'Application.Read.All')
+    $targetServicePrincipalName = 'Microsoft Graph'
 
     if (!(Get-AzureADApplication -SearchString $displayName)) {
         $app = New-AzureADApplication -DisplayName $displayName `
@@ -60,27 +73,27 @@ Function New-IntuneDocumentationAppRegistration(){
 
         # create a password (spn key)
         $startDate = Get-Date
-        $endDate = $startDate.AddYears(5)
-        $appPwd = New-AzureADApplicationPasswordCredential -ObjectId $app.ObjectId -CustomKeyIdentifier "Primary" -StartDate $startDate -EndDate $endDate
+        $endDate = $startDate.AddDays($TokenLifetimeDays)
+        $appPwd = New-AzureADApplicationPasswordCredential -ObjectId $app.ObjectId -CustomKeyIdentifier ((New-Guid).Guid.Replace("-","").subString(0, 30)) -StartDate $startDate -EndDate $endDate
 
         # create a service principal for your application
         # you need this to be able to grant your application the required permission
         $spForApp = New-AzureADServicePrincipal -AppId $app.AppId -PasswordCredentials @($appPwd)
+        Set-AzureADAppPermission -targetServicePrincipalName $targetServicePrincipalName -appPermissionsRequired $appPermissionsRequired -childApp $app -spForApp $spForApp
+    
     } else {
-        Write-Output -InputObject ('App Registration {0} already exists' -f $displayName)
+        Write-Debug ('App Registration {0} already exists' -f $displayName)
         $app = Get-AzureADApplication -SearchString $displayName
+        $spForApp = Get-AzureADServicePrincipal -SearchString $app.AppId
+        # create a password (spn key)
+        $startDate = Get-Date
+        $endDate = $startDate.AddDays($TokenLifetimeDays)
+        $appPwd = New-AzureADApplicationPasswordCredential -ObjectId $app.ObjectId -CustomKeyIdentifier ((New-Guid).Guid.Replace("-","").subString(0, 30)) -StartDate $startDate -EndDate $endDate
+        Set-AzureADAppPermission -targetServicePrincipalName $targetServicePrincipalName -appPermissionsRequired $appPermissionsRequired -childApp $app -spForApp $spForApp -ErrorAction SilentlyContinue
+    
     }
 
-    $appPermissionsRequired = @('Policy.Read.All',
-                                    'Directory.Read.All',
-                                    'DeviceManagementServiceConfig.Read.All',
-                                    'DeviceManagementRBAC.Read.All',
-                                    'DeviceManagementManagedDevices.Read.All',
-                                    'DeviceManagementConfiguration.Read.All',
-                                    'DeviceManagementApps.Read.All',
-                                    'Device.Read.All')
-    $targetServicePrincipalName = 'Microsoft Graph'
-    Set-AzureADAppPermission -targetServicePrincipalName $targetServicePrincipalName -appPermissionsRequired $appPermissionsRequired -childApp $app -spForApp $spForApp
+    
     
 
     #endregion

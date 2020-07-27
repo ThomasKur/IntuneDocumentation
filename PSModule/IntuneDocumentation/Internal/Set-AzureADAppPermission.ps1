@@ -12,7 +12,7 @@ Function Set-AzureADAppPermission
     $targetSp = Get-AzureADServicePrincipal -Filter "DisplayName eq '$($targetServicePrincipalName)'"
 
     # Iterate Permissions array
-    Write-Output -InputObject ('Retrieve Role Assignments objects')
+    Write-Verbose ('Retrieve Role Assignments objects')
     $RoleAssignments = @()
     Foreach ($AppPermission in $appPermissionsRequired) {
         $RoleAssignment = $targetSp.AppRoles | Where-Object { $_.Value -eq $AppPermission}
@@ -31,12 +31,12 @@ Function Set-AzureADAppPermission
     $requiredResourceAccess.ResourceAccess = $ResourceAccessObjects
 
     # set the required resource access
-    Set-AzureADApplication -ObjectId $childApp.ObjectId -RequiredResourceAccess $requiredResourceAccess
+    Set-AzureADApplication -ObjectId $childApp.ObjectId -RequiredResourceAccess $requiredResourceAccess 
     Start-Sleep -s 1
 
     # grant the required resource access
     foreach ($RoleAssignment in $RoleAssignments) {
-        Write-Output -InputObject ('Granting admin consent for App Role: {0}' -f $($RoleAssignment.Value))
+        Write-Verbose ('Granting admin consent for App Role: {0}' -f $($RoleAssignment.Value))
         New-AzureADServiceAppRoleAssignment -ObjectId $spForApp.ObjectId -Id $RoleAssignment.Id -PrincipalId $spForApp.ObjectId -ResourceId $targetSp.ObjectId
         Start-Sleep -s 1
     }

@@ -40,7 +40,7 @@ Function Invoke-IntuneDocumentation(){
     Author: Thomas Kurth/baseVISION
     Co-Author: jflieben
     Co-Author: Robin Dadswell
-    Date:   14.6.2020
+    Date:   26.7.2020
 
     History
         See Release Notes in Github.
@@ -107,6 +107,7 @@ Function Invoke-IntuneDocumentation(){
     } else {
         Copy-Item "$PSScriptRoot\..\Data\Template.docx" -Destination $FullDocumentationPath
         Update-WordText -FilePath $FullDocumentationPath -ReplacingText "DATE" -NewText (Get-Date -Format "HH:mm dd.MM.yyyy")
+        Update-WordText -FilePath $FullDocumentationPath -ReplacingText "SYSTEM" -NewText "Intune"
         try{
             $org = Invoke-MSGraphRequest -Url /organization
             Update-WordText -FilePath $FullDocumentationPath -ReplacingText "TENANT" -NewText $org.value.displayName

@@ -30,7 +30,7 @@ CompanyName = 'WorkplaceNinjas'
 Copyright = '(c) 2020 Thomas Kurth. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Automatic Intune Documentation to simplify the life of admins and consultants.'
+Description = 'Automatic Intune and Conditional Access Documentation to simplify the life of admins and consultants.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.0'
@@ -71,7 +71,8 @@ RequiredModules = @('Microsoft.Graph.Intune',
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = 'Invoke-IntuneDocumentation', 
-               'New-IntuneDocumentationAppRegistration'
+               'New-IntuneDocumentationAppRegistration',
+            'Invoke-ConditionalAccessDocumentation'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
@@ -97,7 +98,7 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = 'Intune','Windows','Documentation','MEM','MSGraph'
+        Tags = 'Intune','Windows','Documentation','MEM','MSGraph','AzureAD','ConditionalAccess'
 
         # A URL to the license for this module.
         # LicenseUri = ''

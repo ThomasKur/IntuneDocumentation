@@ -3,6 +3,7 @@
 ## 2.0.17 - 26.07.2020 - Thomas Kurth
 
 - Bugfix to include MAM assignments
+- Add Conditional Access Documentation
 
 ## 2.0.16 - 21.07.2020 - Thomas Kurth
 

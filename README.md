@@ -1,8 +1,8 @@
-# Intune Documentation
+# Intune & Azure AD Conditional Access Documentation
 
-<img align="right" src="https://github.com/ThomasKur/IntuneDocumentation/raw/master/Logo/IntuneDocumentationLogo.png" width="300px" alt="Automatic Intune Documentation Logo">Automatic Intune Documentation to simplify the life of admins and consultants.
+<img align="right" src="https://github.com/ThomasKur/IntuneDocumentation/raw/master/Logo/IntuneDocumentationLogo.png" width="300px" alt="Automatic Intune Documentation Logo">Automatic Intune and Conditional Access Documentation to simplify the life of admins and consultants.
 
-This Script will document:
+This function Invoke-IntuneDocumentation will document:
 
 - Configuration Policies
 - Compliance Policies
@@ -22,7 +22,10 @@ This Script will document:
 - Security Baseline
 - Custom Roles
 
-## Usage
+The function Invoke-ConditionalAccessDocumentation will document:
+- Azure AD Conditional Access Policies
+
+## Usage Intune Documentation
 
 Since version 2.0.0 the Automatic Intune Documentation script is available in th PowerShell Gallery and therefore its much simpler to install and use it. You can just use these two commands:
 
@@ -39,6 +42,22 @@ Invoke-IntuneDocumentation -FullDocumentationPath c:\temp\IntuneDoc.docx
 
 Install-Module Microsoft.Graph.Intune
 Install-Module PSWord
+
+```
+
+## Usage Conditional Access Documentation
+
+You can just use these two commands:
+
+**Important:** The Conditional Access Policy Documentation does not support login with interactive credentials. Therefore, it's required to create a custom app which can be done by calling 'New-IntuneDocumentationAppRegistration'. I recommend saving the result in a password vault and using always the same client secret.
+
+```powershell
+
+# If you have already have the modulte installed then you can skip the first command. 
+Install-Module IntuneDocumentation
+# If App registration already exists it will only creade new CLient Secret. If you know the existing from a previous execution you can skip the next line.
+$clientCreds = New-IntuneDocumentationAppRegistration -TokenLifetimeDays 5
+Invoke-ConditionalAccessDocumentation -FullDocumentationPath c:\temp\CADoc.docx -ClientId $clientCreds.ClientId -Tenant $clientCreds.TenantId -ClientSecret $clientCreds.ClientSecret
 
 ```
 
@@ -97,6 +116,8 @@ But select also the following permission scopes:
 - 'DeviceManagementConfiguration.Read.All'
 - 'DeviceManagementApps.Read.All'
 - 'Device.Read.All'
+- 'Agreement.Read.All'
+- 'Application.Read.All'
 
 #### Generate Documentation without user interaction
 
