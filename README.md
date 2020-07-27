@@ -23,7 +23,9 @@ This function Invoke-IntuneDocumentation will document:
 - Custom Roles
 
 The function Invoke-ConditionalAccessDocumentation will document:
+
 - Azure AD Conditional Access Policies
+- Translate referenced id's to real object names (users, groups, roles and applications)
 
 ## Usage Intune Documentation
 

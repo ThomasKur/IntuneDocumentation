@@ -4,6 +4,8 @@
 
 - Bugfix to include MAM assignments
 - Add Conditional Access Documentation
+- Conditional Access Documentation - Translate referenced id's to real object names (users, groups, roles and applications)
+
 
 ## 2.0.16 - 21.07.2020 - Thomas Kurth
 
