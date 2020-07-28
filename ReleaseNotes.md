@@ -1,18 +1,16 @@
 # Release Notes
 
-## 2.0.18 - 26.07.2020 - Thomas Kurth
+## 2.0.18 - 28.07.2020 - Thomas Kurth
 
 - Bugfix to include App Config assignments
 - Improve Conditional Access Documentation
 - Generate CSV for COnditional Access Documentation
-
 
 ## 2.0.17 - 26.07.2020 - Thomas Kurth
 
 - Bugfix to include MAM assignments
 - Add Conditional Access Documentation
 - Conditional Access Documentation - Translate referenced id's to real object names (users, groups, roles and applications)
-
 
 ## 2.0.16 - 21.07.2020 - Thomas Kurth
 
