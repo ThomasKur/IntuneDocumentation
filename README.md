@@ -145,6 +145,8 @@ For any issues or feedback related to this module, please register for GitHub, a
 
 @guidooliveira for the PSWord Module, which enables the creation of the Word file. <https://github.com/guidooliveira/PSWord>
 
+@MScholtes for the Transponse-Object example <https://github.com/MScholtes/TechNet-Gallery>
+
 @joslieben for extending and improving the script
 
 @dads07a for adding Application protection Policies to the documentation

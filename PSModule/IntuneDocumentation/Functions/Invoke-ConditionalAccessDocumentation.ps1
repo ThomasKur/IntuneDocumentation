@@ -111,14 +111,15 @@ Function Invoke-ConditionalAccessDocumentation(){
     foreach($CAPolicy in $CAPolicies){
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text $CAPolicy.displayName
         $ResultCAPolicy = New-Object -Type PSObject
-        $ResultCAPolicy | Add-Member Noteproperty "Id" $CAPolicy.id
-        $ResultCAPolicy | Add-Member Noteproperty "DisplayName" $CAPolicy.displayName
-        $ResultCAPolicy | Add-Member Noteproperty "Created" $CAPolicy.createdDateTime
-        $ResultCAPolicy | Add-Member Noteproperty "Modified" $CAPolicy.modifiedDateTime
-        $ResultCAPolicy | Add-Member Noteproperty "State" $CAPolicy.state
+        $ResultCAPolicy | Add-Member Noteproperty "M_Id" $CAPolicy.id
+        $ResultCAPolicy | Add-Member Noteproperty "M_DisplayName" $CAPolicy.displayName
+        $ResultCAPolicy | Add-Member Noteproperty "M_Created" $CAPolicy.createdDateTime
+        $ResultCAPolicy | Add-Member Noteproperty "M_Modified" $CAPolicy.modifiedDateTime
+        $ResultCAPolicy | Add-Member Noteproperty "M_State" $CAPolicy.state
         $ResultCAPolicy | Add-Member Noteproperty "C_SignInRiskLevel" ($CAPolicy.conditions.signInRiskLevels -join ",")
         $ResultCAPolicy | Add-Member Noteproperty "C_ClientAppTypes" ($CAPolicy.conditions.clientAppTypes -join ",")
-        $ResultCAPolicy | Add-Member Noteproperty "C_Platforms" ($CAPolicy.conditions.clientAppTypes -join ",")
+        $ResultCAPolicy | Add-Member Noteproperty "C_PlatformsInclude" ($CAPolicy.conditions.platforms.includePlatforms -join ",")
+        $ResultCAPolicy | Add-Member Noteproperty "C_PlatformsExclude" ($CAPolicy.conditions.platforms.excludePlatforms -join ",")
         $ResultCAPolicy | Add-Member Noteproperty "C_LocationsInclude" ($CAPolicy.conditions.locations.includeLocations -join ",")
         $ResultCAPolicy | Add-Member Noteproperty "C_LocationsExclude" ($CAPolicy.conditions.locations.excludeLocations -join ",")
         $ResultCAPolicy | Add-Member Noteproperty "C_DeviceStates" ($CAPolicy.conditions.deviceStates -join ",")
@@ -155,13 +156,13 @@ Function Invoke-ConditionalAccessDocumentation(){
         # Group Conditions
         $IncludeGroups = @()
         foreach($group in $CAPolicy.conditions.users.includeGroups){
-            $IncludeGroups += Get-AADGroup -groupid $group
+            $IncludeGroups += (Get-AADGroup -groupid $group).displayName
         }
         $ResultCAPolicy | Add-Member Noteproperty "C_UsersIncludeGroups" ($IncludeGroups -join [System.Environment]::NewLine)
 
         $ExcludeApps = @()
         foreach($group in $CAPolicy.conditions.users.excludeGroups){
-            $ExcludeGroups += Get-AADGroup -groupid $group
+            $ExcludeGroups += (Get-AADGroup -groupid $group).displayName
         }
         $ResultCAPolicy | Add-Member Noteproperty "C_UsersExcludeGroups" ($ExcludeGroups -join [System.Environment]::NewLine)
 
@@ -192,10 +193,31 @@ Function Invoke-ConditionalAccessDocumentation(){
         
         $ResultCAPolicies += $ResultCAPolicy
 
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text Metadata
         $ht2 = @{}
-        $ResultCAPolicy.psobject.properties | ForEach-Object { $ht2[($_.Name)] = ($(if($null -eq $_.Value){""}else{$_.Value})) }
+        $ResultCAPolicy.psobject.properties | Where-Object { $_.Name -like "M_*" } | ForEach-Object { $ht2[($_.Name.Replace("M_",""))] = ($(if($null -eq $_.Value){""}else{$_.Value})) }
         ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text Conditions
+        $ht2 = @{}
+        $ResultCAPolicy.psobject.properties | Where-Object { $_.Name -like "C_*" } | ForEach-Object { $ht2[($_.Name.Replace("C_",""))] = ($(if($null -eq $_.Value){""}else{$_.Value})) }
+        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+        
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "Grant Controls"
+        $ht2 = @{}
+        $ResultCAPolicy.psobject.properties | Where-Object { $_.Name -like "G_*" } | ForEach-Object { $ht2[($_.Name.Replace("G_",""))] = ($(if($null -eq $_.Value){""}else{$_.Value})) }
+        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+        
+        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "Session Controls"
+        $ht2 = @{}
+        $ResultCAPolicy.psobject.properties | Where-Object { $_.Name -like "S_*" } | ForEach-Object { $ht2[($_.Name.Replace("S_",""))] = ($(if($null -eq $_.Value){""}else{$_.Value})) }
+        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+    
     }
+    $CsvPath = $FullDocumentationPath -replace "docx","csv"
+    $ResultCAPolicies | Invoke-TransposeObject | Export-Csv -Path $CsvPath -Delimiter ";" -NoTypeInformation -Force
+
+
     #endregion
 
     #endregion
