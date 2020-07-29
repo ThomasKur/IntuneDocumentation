@@ -18,7 +18,7 @@ Function Invoke-PrintAssignmentDetail(){
             Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
             if($Assignments.count -gt 1){
                 $AssignmentsList = @()
-                foreach($group in $DCPA){
+                foreach($group in $Assignments){
                     if($null -ne $group.target.groupId){
                         $AssignmentsList += (Get-AADGroup -groupid $group.target.groupId).displayName
                     } else {
