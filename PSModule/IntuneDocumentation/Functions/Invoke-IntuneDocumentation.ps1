@@ -10,7 +10,7 @@ Function Invoke-IntuneDocumentation(){
     .PARAMETER FullDocumentationPath
         Path including filename where the documentation should be created. The filename has to end with .docx.
         Note:
-        If there is already a file present, the documentation witt be added at the end of the existing document.
+        If there is already a file present, the documentation will be added at the end of the existing document.
 
     .PARAMETER UseTranslationBeta
         When using this parameter the API names will be translated to the labels used in the Intune Portal. 
