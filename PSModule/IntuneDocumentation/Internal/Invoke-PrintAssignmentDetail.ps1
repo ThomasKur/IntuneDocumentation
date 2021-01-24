@@ -13,27 +13,22 @@ Function Invoke-PrintAssignmentDetail(){
         param(
             $Assignments
         )
+        
         if($Assignments){
+            $ExtendedInfo = @()
             write-Log "Document assignments..."
             Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
             if($Assignments.count -gt 1){
-                $AssignmentsList = @()
-                foreach($group in $Assignments){
-                    if($null -ne $group.target.groupId){
-                        $AssignmentsList += (Get-AADGroup -groupid $group.target.groupId).displayName
-                    } else {
-                        $AssignmentsList += "$(($group.target.'@odata.type' -replace "#microsoft.graph.",''))"
-                    }
-                    
+                foreach($Assignment in $Assignments){
+                    $ExtendedInfo += Invoke-PrintAssignmentDetail_Assignment -Assignment $Assignment
                 }
-                $AssignmentsList | Add-WordText -FilePath $FullDocumentationPath -Size 12
             } else {
-                if($null -ne $Assignments.target.groupId){
-                    (Get-AADGroup -groupid $Assignments.target.groupId).displayName | Add-WordText -FilePath $FullDocumentationPath  -Size 12
-                } else {
-                    "$(($Assignments.target.'@odata.type' -replace "#microsoft.graph.",''))" | Add-WordText -FilePath $FullDocumentationPath  -Size 12
-                }
-                
+                $ExtendedInfo += Invoke-PrintAssignmentDetail_Assignment -Assignment $Assignments
+            }
+            if($null -ne $ExtendedInfo){
+                $ExtendedInfo | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+            } else {
+                Add-WordText -FilePath $FullDocumentationPath -Text "No assignments"
             }
         }
         
