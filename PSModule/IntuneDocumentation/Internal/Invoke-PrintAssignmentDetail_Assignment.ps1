@@ -34,20 +34,24 @@ Function Invoke-PrintAssignmentDetail_Assignment(){
             $GType = "Static"
         }
         $Members = Get-Groups_Members -groupId $Assignment.target.groupId
-            if($null -eq $Members.count){
-                if($null -eq $Members){
-                    $MemberCount = 1
-                } else {
-                    $MemberCount = 0
-                }
+        if($null -eq $Members.count){
+            if($null -eq $Members){
+                $MemberCount = 1
             } else {
-                $MemberCount = $Members.count
+                $MemberCount = 0
             }
+        } else {
+            $MemberCount = $Members.count
+        }
+        $DynamicRule = $GroupObj.membershipRule
+        if($null -eq $DynamicRule){
+            $DynamicRule = "-"
+        }
         $returnObj =[PSCustomObject]@{
             Name = $Name
             MemberCount = $MemberCount
             GroupType = $GType
-            DynamicRule = $GroupObj.membershipRule
+            DynamicRule = $DynamicRule
         }
     } else {
 
@@ -69,10 +73,14 @@ Function Invoke-PrintAssignmentDetail_Assignment(){
     #Intent if Available
     if($null -ne $Assignment.intent){
         $returnObj | Add-Member -MemberType NoteProperty -Name "Intent" -Value $Assignment.intent
+    } else {
+        $returnObj | Add-Member -MemberType NoteProperty -Name "Intent" -Value "-"
     }
     # Source
     if($null -ne $Assignment.source){
         $returnObj | Add-Member -MemberType NoteProperty -Name "Source" -Value $Assignment.source
+    } else {
+        $returnObj | Add-Member -MemberType NoteProperty -Name "Source" -Value "-"
     }
     # Include or Exclude
     if($Assignment.'@odata.type' -imatch 'exclusion'){

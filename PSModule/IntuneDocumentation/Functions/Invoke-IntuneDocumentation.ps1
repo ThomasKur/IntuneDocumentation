@@ -119,6 +119,7 @@ Function Invoke-IntuneDocumentation(){
     #endregion
     #region Document Apps
     $Intune_Apps = @()
+    $AppGroups = @()
     Get-MobileAppsBeta | ForEach-Object {
         $App_Assignment = Get-IntuneMobileAppAssignment -mobileAppId $_.id
         if($App_Assignment){
@@ -129,6 +130,7 @@ Function Invoke-IntuneDocumentation(){
             $Assignments = @()
             foreach($Assignment in $App_Assignment) {
                 if($null -ne $Assignment.target.groupId){
+                    $AppGroups += $Assignment.target.groupId
                     $Assignments += "$((Get-AADGroup -groupid $Assignment.target.groupId).displayName)`n - Intent:$($Assignment.intent)"
                 } else {
                     $Assignments += "$(($Assignment.target.'@odata.type' -replace "#microsoft.graph.",''))`n - Intent:$($Assignment.intent)"
@@ -141,6 +143,10 @@ Function Invoke-IntuneDocumentation(){
     if($null -ne $Intune_Apps){
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Applications"
         $Intune_Apps | Sort-Object Publisher,DisplayName | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
+        if($null -ne $AppGroups){
+            Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Groups used to assign apps"
+            Invoke-PrintGroup -GroupIds $AppGroups
+        }
     }
     #endregion
     #region Document App protection policies
