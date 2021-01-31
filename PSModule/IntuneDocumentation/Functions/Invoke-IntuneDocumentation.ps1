@@ -270,7 +270,7 @@ Function Invoke-IntuneDocumentation(){
         Invoke-PrintAssignmentDetail -Assignments $DCPA
         
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Script"
-        $PSScript.scriptContent | Add-WordText -FilePath $FullDocumentationPath -Size 10 -Italic -FontFamily "Courier New"
+        $PSScript.scriptContent -replace "`0", "" | Add-WordText -FilePath $FullDocumentationPath -Size 10 -Italic -FontFamily "Courier New"
     }
     #endregion
     #region AutoPilot Configuration
@@ -321,12 +321,16 @@ Function Invoke-IntuneDocumentation(){
     #endregion
 
     #region Apple Push Certificate
-    $VPPs = Get-IntuneVppToken
-    $APNs = Get-IntuneApplePushNotificationCertificate
+    try{ 
+        $VPPs = Get-IntuneVppToken -ErrorAction SilentlyContinue
+        $APNs = Get-IntuneApplePushNotificationCertificate -ErrorAction SilentlyContinue
+    } catch {
+
+    }
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Apple Configurations"
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "Apple Push Certificate"
     foreach($APN in $APNs){
-        write-Log "AutoPilot Config: $($APN.appleIdentifier)"
+        write-Log "APN Config: $($APN.appleIdentifier)"
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text $APN.appleIdentifier
         Invoke-PrintTable -Properties $APN.psobject.properties -TypeName "applePushNotificationCertificate"
     }
