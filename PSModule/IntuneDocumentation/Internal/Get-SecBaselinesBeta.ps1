@@ -27,12 +27,25 @@ Function Get-SecBaselinesBeta(){
                 $displayName = $setting.definitionId -replace "deviceConfiguration--","" -replace "admx--",""  -replace "_"," "
                 # }
                 if($null -eq $setting.value){
-                    $v = ""
+
+                    if($setting.definitionId -eq "deviceConfiguration--windows10EndpointProtectionConfiguration_firewallRules"){
+                        $v = $setting.valueJson | ConvertFrom-Json
+                        foreach($item in $v){
+                            $TempSetting = [PSCustomObject]@{ displayName = "FW Rule - $($item.displayName)"; Value = ($item | ConvertTo-Json) }
+                            $TempSettings += $TempSetting
+                        }
+                    } else {
+                        
+                        $v = ""
+                        $TempSetting = [PSCustomObject]@{ displayName = $displayName; Value = $v }
+                        $TempSettings += $TempSetting
+                    }
                 } else {
                     $v = $setting.value
+                    $TempSetting = [PSCustomObject]@{ displayName = $displayName; Value = $v }
+                    $TempSettings += $TempSetting
                 }
-                $TempSetting = [PSCustomObject]@{ displayName = $displayName; Value = $v }
-                $TempSettings += $TempSetting
+                
             }
             $returnTemplate | Add-Member Noteproperty -Name Settings -Value $TempSettings -Force
             $assignments = Invoke-MSGraphRequest -Url "https://graph.microsoft.com/beta/deviceManagement/intents/$($template.id)/assignments"
