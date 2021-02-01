@@ -14,7 +14,6 @@ Function Invoke-PrintTableTranslate(){
         [Parameter(Mandatory=$true)]
         [String]$TypeName
     )
-    $TextInfo = (Get-Culture).TextInfo
     $MaxStringLengthSettings = 350
     $ht = @{}
     $TranslationFile = "$PSScriptRoot\..\Data\LabelTranslation\$TypeName.json"
