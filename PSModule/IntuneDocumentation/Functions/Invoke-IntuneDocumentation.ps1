@@ -120,7 +120,7 @@ Function Invoke-IntuneDocumentation(){
     #region Document Apps
     $Intune_Apps = @()
     $AppGroups = @()
-    Get-MobileAppsBeta | ForEach-Object {
+    Get-MobileAppsBeta | ForEach-Object  {
         $App_Assignment = Get-IntuneMobileAppAssignment -mobileAppId $_.id
         if($App_Assignment){
             $Intune_App = New-Object -Type PSObject
@@ -179,7 +179,8 @@ Function Invoke-IntuneDocumentation(){
             write-Log "App Configuration Policy: $($MAC.displayName)"
             Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $MAC.displayName
             Invoke-PrintTable -Properties $MAC.psobject.properties -TypeName $MAC.'@odata.type'
-            
+            $MACA = Get-ManagedAppConfig_Assignment -policyId $MAC.id
+            Invoke-PrintAssignmentDetail -Assignments $MACA
         }
     }
     #endregion
