@@ -17,6 +17,13 @@ Function Get-ConfigurationProfileBeta(){
             $allScripts= @()
 
             $request.value.GetEnumerator() | ForEach-Object {
+                try{
+                    if($null -ne $PSItem.omaSettings){
+                        foreach($setting in ($PSItem.omaSettings)){
+                            $PSItem | Add-Member -MemberType NoteProperty -Name $setting.displayName -Value $setting
+                        }
+                    }
+                } catch {}
                 $PSItem
             }
             $allScripts
