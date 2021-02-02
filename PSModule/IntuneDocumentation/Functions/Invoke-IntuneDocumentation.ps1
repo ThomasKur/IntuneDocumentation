@@ -119,7 +119,8 @@ Function Invoke-IntuneDocumentation(){
     #endregion
     #region Document Apps
     $Intune_Apps = @()
-    Get-MobileAppsBeta | ForEach-Object {
+    $AppGroups = @()
+    Get-MobileAppsBeta | ForEach-Object  {
         $App_Assignment = Get-IntuneMobileAppAssignment -mobileAppId $_.id
         if($App_Assignment){
             $Intune_App = New-Object -Type PSObject
@@ -129,6 +130,7 @@ Function Invoke-IntuneDocumentation(){
             $Assignments = @()
             foreach($Assignment in $App_Assignment) {
                 if($null -ne $Assignment.target.groupId){
+                    $AppGroups += $Assignment.target.groupId
                     $Assignments += "$((Get-AADGroup -groupid $Assignment.target.groupId).displayName)`n - Intent:$($Assignment.intent)"
                 } else {
                     $Assignments += "$(($Assignment.target.'@odata.type' -replace "#microsoft.graph.",''))`n - Intent:$($Assignment.intent)"
@@ -141,18 +143,21 @@ Function Invoke-IntuneDocumentation(){
     if($null -ne $Intune_Apps){
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Applications"
         $Intune_Apps | Sort-Object Publisher,DisplayName | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Contents -Design LightListAccent2
+        if($null -ne $AppGroups){
+            Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Groups used to assign apps"
+            Invoke-PrintGroup -GroupIds $AppGroups
+        }
     }
     #endregion
     #region Document App protection policies
-    $MAMs = Get-IntuneAppProtectionPolicy
+    $MAMs = Get-IntuneAppProtectionPolicy | Where-Object { $_.'@odata.type' -notlike "*AppConfiguration" }
+
     if($null -ne $MAMs){
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "App Protection Policies"
         foreach($MAM in $MAMs){
             write-Log "App Protection Policy: $($MAM.displayName)"
             Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $MAM.displayName
-            $ht2 = @{}
-            $MAM.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
-            ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+            Invoke-PrintTable -Properties $MAM.psobject.properties -TypeName $MAM.'@odata.type'
             if($MAM.'@odata.type' -eq "#microsoft.graph.iosManagedAppProtection"){
                 $MAMA = Get-MAM_iOS_Assignment -policyId $MAM.id
             }
@@ -167,20 +172,15 @@ Function Invoke-IntuneDocumentation(){
     }
     #endregion
     #region Document App configuration policies
-    $MACs = Get-DeviceAppManagement_MobileAppConfigurations
+    $MACs = Get-IntuneAppProtectionPolicy | Where-Object { $_.'@odata.type' -like "*AppConfiguration" }
     if($null -ne $MACs){
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "App Configuration Policies"
         foreach($MAC in $MACs){
-            write-Log "App Protection Policy: $($MAC.displayName)"
+            write-Log "App Configuration Policy: $($MAC.displayName)"
             Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $MAC.displayName
-            $ht2 = @{}
-            $MAC.encodedSettingXml = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($MAC.encodedSettingXml))
-            $MAC.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
-            ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
-            $id = $MAC.id
-            
-            $MAMA = Get-DeviceAppManagement_MobileAppConfigurations_Assignments -managedDeviceMobileAppConfigurationId $id
-            Invoke-PrintAssignmentDetail -Assignments $MAMA
+            Invoke-PrintTable -Properties $MAC.psobject.properties -TypeName $MAC.'@odata.type'
+            $MACA = Get-ManagedAppConfig_Assignment -policyId $MAC.id
+            Invoke-PrintAssignmentDetail -Assignments $MACA
         }
     }
     #endregion
@@ -191,12 +191,13 @@ Function Invoke-IntuneDocumentation(){
         foreach($DCP in $DCPs){
             write-Log "Device Compliance Policy: $($DCP.displayName)"
             Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $DCP.displayName
-            $ht2 = @{}
-            $DCP.psobject.properties | ForEach-Object { $ht2[(Format-MsGraphData $($_.Name))] = (Format-MsGraphData $($_.Value)) }
-            ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
-            $id = $DCP.id
-            $DCPA = Get-IntuneDeviceCompliancePolicyAssignment -deviceCompliancePolicyId $id
-            Invoke-PrintAssignmentDetail -Assignments $DCPA
+            if([String]::IsNullOrWhiteSpace($DCP.'@odata.type') -eq $false){
+                Invoke-PrintTable -Properties $DCP.psobject.properties -TypeName $DCP.'@odata.type'
+                $id = $DCP.id
+                $DCPA = Get-IntuneDeviceCompliancePolicyAssignment -deviceCompliancePolicyId $id
+                Invoke-PrintAssignmentDetail -Assignments $DCPA
+            }
+            
         }
     }
     #endregion
@@ -206,9 +207,9 @@ Function Invoke-IntuneDocumentation(){
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Security Baselines"
         foreach($SB in $SBs){
             write-Log "Security Baselines Policy: $($SB.displayName)"
-            Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $SB.displayName
-            $SB.Settings | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
-            
+            Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $SB.Name
+            # $SB.Settings | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+            Invoke-PrintTable -Properties $SB.Settings -TypeName $SB.'@odata.type'
             Invoke-PrintAssignmentDetail -Assignments $SB.Assignments
         }
     }
@@ -264,7 +265,7 @@ Function Invoke-IntuneDocumentation(){
         Invoke-PrintAssignmentDetail -Assignments $DCPA
         
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Script"
-        $PSScript.scriptContent | Add-WordText -FilePath $FullDocumentationPath -Size 10 -Italic -FontFamily "Courier New"
+        $PSScript.scriptContent -replace "`0", "" | Add-WordText -FilePath $FullDocumentationPath -Size 10 -Italic -FontFamily "Courier New"
     }
     #endregion
     #region AutoPilot Configuration
@@ -315,12 +316,16 @@ Function Invoke-IntuneDocumentation(){
     #endregion
 
     #region Apple Push Certificate
-    $VPPs = Get-IntuneVppToken
-    $APNs = Get-IntuneApplePushNotificationCertificate
+    try{ 
+        $VPPs = Get-IntuneVppToken -ErrorAction SilentlyContinue
+        $APNs = Get-IntuneApplePushNotificationCertificate -ErrorAction SilentlyContinue
+    } catch {
+
+    }
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Apple Configurations"
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "Apple Push Certificate"
     foreach($APN in $APNs){
-        write-Log "AutoPilot Config: $($APN.appleIdentifier)"
+        write-Log "APN Config: $($APN.appleIdentifier)"
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text $APN.appleIdentifier
         Invoke-PrintTable -Properties $APN.psobject.properties -TypeName "applePushNotificationCertificate"
     }

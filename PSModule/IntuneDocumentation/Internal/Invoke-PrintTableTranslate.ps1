@@ -46,6 +46,7 @@ Function Invoke-PrintTableTranslate(){
             } else {
                 $Section = "Metadata"
             }
+
             if($p.TypeNameOfValue -eq "System.Boolean"){
                 $TranslationObject = New-Object PSObject -Property @{
                     Name = $TranslationValue
@@ -63,7 +64,7 @@ Function Invoke-PrintTableTranslate(){
             }
             #Only use translated value if not empty
             if([String]::IsNullOrWhiteSpace($TranslationValue)){
-                $Name = $p.Name
+                $Name = Convert-CamelCaseToDisplayName -Value $p.Name
             } else {
                 $Name = $TranslationValue
             }
