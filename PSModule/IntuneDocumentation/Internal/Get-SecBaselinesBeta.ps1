@@ -16,8 +16,11 @@ Function Get-SecBaselinesBeta(){
         $returnTemplates = @()
         foreach($template in $templates){
             $settings = Invoke-MSGraphRequest -Url "https://graph.microsoft.com/beta/deviceManagement/intents/$($template.id)/settings"
+            $templateDetail = Invoke-MSGraphRequest -Url "https://graph.microsoft.com/beta/deviceManagement/templates/$($template.templateId)"
             $returnTemplate = [PSCustomObject]@{ id = $template.id }
-            $returnTemplate | Add-Member Noteproperty -Name displayName -Value $template.displayName -Force 
+            $returnTemplate | Add-Member Noteproperty -Name Name -Value $template.displayName -Force
+            $typeString = "$($templateDetail.platformType)-$($templateDetail.templateType)-$($templateDetail.templateSubtype)" 
+            $returnTemplate | Add-Member Noteproperty -Name '@odata.type' -Value $typeString -Force 
 
             $TempSettings = @()
             foreach($setting in $settings.value){
@@ -31,18 +34,18 @@ Function Get-SecBaselinesBeta(){
                     if($setting.definitionId -eq "deviceConfiguration--windows10EndpointProtectionConfiguration_firewallRules"){
                         $v = $setting.valueJson | ConvertFrom-Json
                         foreach($item in $v){
-                            $TempSetting = [PSCustomObject]@{ displayName = "FW Rule - $($item.displayName)"; Value = ($item | ConvertTo-Json) }
+                            $TempSetting = [PSCustomObject]@{ Name = "FW Rule - $($item.displayName)"; Value = ($item | ConvertTo-Json) }
                             $TempSettings += $TempSetting
                         }
                     } else {
                         
                         $v = ""
-                        $TempSetting = [PSCustomObject]@{ displayName = $displayName; Value = $v }
+                        $TempSetting = [PSCustomObject]@{ Name = $displayName; Value = $v }
                         $TempSettings += $TempSetting
                     }
                 } else {
                     $v = $setting.value
-                    $TempSetting = [PSCustomObject]@{ displayName = $displayName; Value = $v }
+                    $TempSetting = [PSCustomObject]@{ Name = $displayName; Value = $v }
                     $TempSettings += $TempSetting
                 }
                 

@@ -207,9 +207,9 @@ Function Invoke-IntuneDocumentation(){
         Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Security Baselines"
         foreach($SB in $SBs){
             write-Log "Security Baselines Policy: $($SB.displayName)"
-            Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $SB.displayName
-            $SB.Settings | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
-            
+            Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $SB.Name
+            # $SB.Settings | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+            Invoke-PrintTable -Properties $SB.Settings -TypeName $SB.'@odata.type'
             Invoke-PrintAssignmentDetail -Assignments $SB.Assignments
         }
     }
