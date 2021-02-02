@@ -157,6 +157,9 @@ Function Invoke-IntuneDocumentation(){
         foreach($MAM in $MAMs){
             write-Log "App Protection Policy: $($MAM.displayName)"
             Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text $MAM.displayName
+            if($MAM.'@odata.type' -eq "#microsoft.graph.mdmWindowsInformationProtectionPolicy"){
+                $MAM.protectedApps = $MAM.protectedApps.displayName -join ", "
+            }
             Invoke-PrintTable -Properties $MAM.psobject.properties -TypeName $MAM.'@odata.type'
             if($MAM.'@odata.type' -eq "#microsoft.graph.iosManagedAppProtection"){
                 $MAMA = Get-MAM_iOS_Assignment -policyId $MAM.id
