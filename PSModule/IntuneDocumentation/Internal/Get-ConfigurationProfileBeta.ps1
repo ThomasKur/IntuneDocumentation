@@ -23,7 +23,9 @@ Function Get-ConfigurationProfileBeta(){
                             $PSItem | Add-Member -MemberType NoteProperty -Name $setting.displayName -Value $setting
                         }
                     }
-                } catch {}
+                } catch {
+                    Write-Log "Failed to parse omaSettings"
+                }
                 $PSItem
             }
             $allScripts

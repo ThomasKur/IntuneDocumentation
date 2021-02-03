@@ -323,7 +323,7 @@ Function Invoke-IntuneDocumentation(){
         $VPPs = Get-IntuneVppToken -ErrorAction SilentlyContinue
         $APNs = Get-IntuneApplePushNotificationCertificate -ErrorAction SilentlyContinue
     } catch {
-
+        Write-Log "Failed to load AppleAPN or VPP information"
     }
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text "Apple Configurations"
     Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "Apple Push Certificate"
