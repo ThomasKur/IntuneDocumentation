@@ -42,6 +42,6 @@ Function Set-AzureADAppPermission
             Start-Sleep -s 1
         }
     } else  {
-        Write-Host "Create Azure AD Application and set permission."
+        Write-Information "Create Azure AD Application and set permission."
     }
 }
