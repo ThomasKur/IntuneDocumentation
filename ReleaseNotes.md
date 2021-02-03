@@ -1,5 +1,18 @@
 # Release Notes
 
+## 2.0.19 - 02.02.2021 - Thomas Kurth
+
+- AD group Assignments are now documented in a table with intent, count of members and more information about the AD Group itself.
+- Add translation for 5 new profiles
+- If no translation is available use a pretty print method to improve readability of API names.
+- Add possibility to translate Security Baseline, MAM and compliance policy
+- Bugfix
+  - Spelling errors
+  - null byte data in scripts error
+  - OMA-URI (Custom Policy) fixed
+  - protectedApps in WIP policy now displayed correctly.
+  - Firewall rules are now dispayed in word file. Per rule one table row instead of all rules in a single row.
+  
 ## 2.0.18 - 28.07.2020 - Thomas Kurth
 
 - Bugfix to include App Config assignments
