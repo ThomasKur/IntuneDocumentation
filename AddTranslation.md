@@ -4,7 +4,7 @@ When using the parameter UseTranslationBeta the api names will be translated to 
 
 |  Image  |  Description |
 |--- |--- |
-| <img src="https://github.com/ThomasKur/IntuneDocumentation/blob/master/Images/Translate-Manuals-1.png">  |Open one of the displayed json files which are displayed after you generated the documentations.   |
+| <img src="https://github.com/ThomasKur/IntuneDocumentation/blob/master/Images/Translate-Manuals-1.png">  |Open one of the displayed json files which are displayed after you generated the documentations. If this is not displayed, then run the command with "-Verbose" parameter or manually check the Data directory in the PowerSHell module directory.  |
 | <img src="https://github.com/ThomasKur/IntuneDocumentation/blob/master/Images/Translate-Manuals-2.png">  |Specify the Name and section of each api propert name by copying the labels from the Intune Console. All names have to be in english. If a you can't associate a property with label, then leave the Name attribute in the json file just empty.|
 |   |Save the file|
 | <img src="https://github.com/ThomasKur/IntuneDocumentation/blob/master/Images/Translate-Manuals-3.png">  |Create a new documentation and check if the result is as expected. if no, go back to step 2.|
