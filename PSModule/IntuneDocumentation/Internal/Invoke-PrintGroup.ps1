@@ -56,6 +56,6 @@ Function Invoke-PrintGroup(){
         }
     }
     if($null -ne $GroupObjs){
-        $GroupObjs | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+        Add-Table -InputObject $GroupObjs -format $format
     }
 }
