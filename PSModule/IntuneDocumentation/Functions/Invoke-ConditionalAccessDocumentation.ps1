@@ -189,7 +189,7 @@ Function Invoke-ConditionalAccessDocumentation(){
         $ResultCAPolicy | Add-Member Noteproperty "S_PersistentBrowser" ($CAPolicy.sessionControls.persistentBrowser.isEnabled)
         $ResultCAPolicy | Add-Member Noteproperty "S_PersistentBrowserMode" ($CAPolicy.sessionControls.persistentBrowser.mode)
         $ResultCAPolicy | Add-Member Noteproperty "S_SignInFrequency" ($CAPolicy.sessionControls.signInFrequency.isEnabled)
-        $ResultCAPolicy | Add-Member Noteproperty "S_SignInFrequencyTimeframe" ($CAPolicy.sessionControls.signInFrequency.value +" "+ $CAPolicy.sessionControls.signInFrequency.type)
+        $ResultCAPolicy | Add-Member Noteproperty "S_SignInFrequencyTimeframe" ("" + $CAPolicy.sessionControls.signInFrequency.value +" "+ $CAPolicy.sessionControls.signInFrequency.type)
         
         $ResultCAPolicies += $ResultCAPolicy
 
