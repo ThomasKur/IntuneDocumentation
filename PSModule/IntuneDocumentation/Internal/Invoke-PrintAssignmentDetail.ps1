@@ -17,7 +17,7 @@ Function Invoke-PrintAssignmentDetail(){
         if($Assignments){
             $ExtendedInfo = @()
             write-Log "Document assignments..."
-            Add-WordText -FilePath $FullDocumentationPath -Heading Heading3 -Text "Assignments"
+            Add-Header -level 3 -format $format -Text "Assignments"
             if($Assignments.count -gt 1){
                 foreach($Assignment in $Assignments){
                     $ExtendedInfo += Invoke-PrintAssignmentDetail_Assignment -Assignment $Assignment
@@ -26,9 +26,9 @@ Function Invoke-PrintAssignmentDetail(){
                 $ExtendedInfo += Invoke-PrintAssignmentDetail_Assignment -Assignment $Assignments
             }
             if($null -ne $ExtendedInfo){
-                $ExtendedInfo | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2
+                Add-Table -InputObject $ExtendedInfo -format $format
             } else {
-                Add-WordText -FilePath $FullDocumentationPath -Text "No assignments"
+                Add-Text -format $format -Text "No assignments"
             }
         }
         

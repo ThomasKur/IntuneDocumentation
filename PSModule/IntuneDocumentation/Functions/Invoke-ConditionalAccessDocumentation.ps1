@@ -42,8 +42,8 @@ Function Invoke-ConditionalAccessDocumentation(){
     [CmdletBinding()]
     Param(
         [ValidateScript({
-            if($_ -notmatch "(\.docx)"){
-                throw "The file specified in the path argument must be of type docx"
+            if($_ -notmatch "(\.(docx|md)$)"){
+                throw "The file specified in the path argument must be of type docx or md"
             }
             return $true 
         })]
@@ -73,6 +73,7 @@ Function Invoke-ConditionalAccessDocumentation(){
     } else {
         $Script:UseTranslation = $false
     }
+    $format = if($FullDocumentationPath -match "(\.md)"){ "md" } else { "docx" }
 
     #region Initialization
     ########################################################
@@ -91,17 +92,18 @@ Function Invoke-ConditionalAccessDocumentation(){
 
     #endregion
     #region CopyTemplate
+    
     if((Test-Path -Path $FullDocumentationPath)){
         Write-Log "File already exists, does not use built-in template." -Type Warn
     } else {
-        Copy-Item "$PSScriptRoot\..\Data\Template.docx" -Destination $FullDocumentationPath
-        Update-WordText -FilePath $FullDocumentationPath -ReplacingText "DATE" -NewText (Get-Date -Format "HH:mm dd.MM.yyyy")
-        Update-WordText -FilePath $FullDocumentationPath -ReplacingText "SYSTEM" -NewText "Conditional Access"
+        Copy-Item "$PSScriptRoot\..\Data\Template.$format" -Destination $FullDocumentationPath
+        Update-Text -format $format -SearchText "DATE" -NewText (Get-Date -Format "HH:mm dd.MM.yyyy")
+        Update-Text -format $format -SearchText "SYSTEM" -NewText "Conditional Access"
         try{
             $org = Invoke-MSGraphRequest -Url /organization
-            Update-WordText -FilePath $FullDocumentationPath -ReplacingText "TENANT" -NewText $org.value.displayName
+            Update-Text -format $format -SearchText "TENANT" -NewText $org.value.displayName
         } catch{
-            Update-WordText -FilePath $FullDocumentationPath -ReplacingText "TENANT" -NewText ""
+            Update-Text -format $format -SearchText "TENANT" -NewText ""
         }
     }
     #endregion
@@ -109,7 +111,8 @@ Function Invoke-ConditionalAccessDocumentation(){
     $ResultCAPolicies = @()
     $CAPolicies = Get-ConditionalAccess
     foreach($CAPolicy in $CAPolicies){
-        Add-WordText -FilePath $FullDocumentationPath -Heading Heading1 -Text $CAPolicy.displayName
+        Add-Header -level 1 -format $format -Text $CAPolicy.displayName
+        
         $ResultCAPolicy = New-Object -Type PSObject
         $ResultCAPolicy | Add-Member Noteproperty "M_Id" $CAPolicy.id
         $ResultCAPolicy | Add-Member Noteproperty "M_DisplayName" $CAPolicy.displayName
@@ -193,28 +196,27 @@ Function Invoke-ConditionalAccessDocumentation(){
         
         $ResultCAPolicies += $ResultCAPolicy
 
-        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text Metadata
+        Add-Header -level 2 -format $format -Text Metadata
         $ht2 = @{}
         $ResultCAPolicy.psobject.properties | Where-Object { $_.Name -like "M_*" } | ForEach-Object { $ht2[($_.Name.Replace("M_",""))] = ($(if($null -eq $_.Value){""}else{$_.Value})) }
-        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+        Add-Table -InputObject ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) -format $format
 
-        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text Conditions
+        Add-Header -level 2 -format $format -Text Conditions
         $ht2 = @{}
         $ResultCAPolicy.psobject.properties | Where-Object { $_.Name -like "C_*" } | ForEach-Object { $ht2[($_.Name.Replace("C_",""))] = ($(if($null -eq $_.Value){""}else{$_.Value})) }
-        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+        Add-Table -InputObject ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) -format $format
         
-        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "Grant Controls"
+        Add-Header -level 2 -format $format -Text "Grant Controls"
         $ht2 = @{}
         $ResultCAPolicy.psobject.properties | Where-Object { $_.Name -like "G_*" } | ForEach-Object { $ht2[($_.Name.Replace("G_",""))] = ($(if($null -eq $_.Value){""}else{$_.Value})) }
-        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
+        Add-Table -InputObject ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) -format $format
         
-        Add-WordText -FilePath $FullDocumentationPath -Heading Heading2 -Text "Session Controls"
+        Add-Header -level 2 -format $format -Text "Session Controls"
         $ht2 = @{}
         $ResultCAPolicy.psobject.properties | Where-Object { $_.Name -like "S_*" } | ForEach-Object { $ht2[($_.Name.Replace("S_",""))] = ($(if($null -eq $_.Value){""}else{$_.Value})) }
-        ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) | Add-WordTable -FilePath $FullDocumentationPath -AutoFitStyle Window -Design LightListAccent2 
-    
+        Add-Table -InputObject ($ht2.GetEnumerator() | Sort-Object -Property Name | Select-Object Name,Value) -format $format    
     }
-    $CsvPath = $FullDocumentationPath -replace "docx","csv"
+    $CsvPath = $FullDocumentationPath -replace $format,"csv"
     $ResultCAPolicies | Invoke-TransposeObject | Export-Csv -Path $CsvPath -Delimiter ";" -NoTypeInformation -Force
 
 
@@ -223,7 +225,9 @@ Function Invoke-ConditionalAccessDocumentation(){
     #endregion
     #region Finishing
     ########################################################
-    Write-Log "Press Ctrl + A and then F9 to Update the table of contents and other dynamic fields in the Word document."
+    if ($format -eq 'docx') {
+        Write-Log "Press Ctrl + A and then F9 to Update the table of contents and other dynamic fields in the Word document."
+    }
     if($Script:NewTranslationFiles.Count -gt 0 -and $Script:UseTranslation){
         Write-Log "You used the option to translate API properties. Some of the configurations of your tenant could not be translated because translations are missing." -Type Warn
         foreach($file in ($Script:NewTranslationFiles | Select-Object -Unique)){
