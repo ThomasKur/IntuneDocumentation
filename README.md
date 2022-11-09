@@ -1,4 +1,10 @@
-# Intune & Azure AD Conditional Access Documentation
+# Intune & Azure AD Conditional Access Documentation (Depreciated)
+
+<br><br><br><br><br>
+
+> Please use the evolved [M365Documentation](https://www.wpninjas.ch/2021/05/automatic-intune-documentation-evolves-to-automatic-microsoft365-documentation/) script which provides more options.
+
+<br><br><br><br><br>
 
 <img align="right" src="https://github.com/ThomasKur/IntuneDocumentation/raw/master/Logo/IntuneDocumentationLogo.png" width="300px" alt="Automatic Intune Documentation Logo">Automatic Intune and Conditional Access Documentation to simplify the life of admins and consultants.
 
