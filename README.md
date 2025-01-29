@@ -2,7 +2,7 @@
 
 <br><br><br><br><br>
 
-> Please use the evolved [M365Documentation](https://www.wpninjas.ch/2021/05/automatic-intune-documentation-evolves-to-automatic-microsoft365-documentation/) script which provides more options.
+> Please use the evolved [M365Documentation](https://github.com/ThomasKur/M365Documentation) script which provides more options.
 
 <br><br><br><br><br>
 
